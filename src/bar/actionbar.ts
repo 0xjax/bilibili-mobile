@@ -101,6 +101,8 @@ export function handleActionbar(type: string): void {
   }
 
   function setFullbtn() {
+    if (!window.TouchGesture?.enableGestures) return
+
     let clickTimer = 0
 
     const fullBtn = document.getElementById('full-now') as HTMLElement
