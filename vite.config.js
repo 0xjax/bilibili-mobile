@@ -10,7 +10,7 @@ export default defineConfig({
                 namespace: "https://github.com/jk278/bilibili-mobile",
                 description:
                     "Safari打开电脑模式，其它浏览器关闭电脑模式修改网站UA，获取舒适的移动端体验。",
-                version: "5.4.1",
+                version: "5.4.2",
                 author: "jk278",
                 license: "MIT",
                 "run-at": "document-start",
