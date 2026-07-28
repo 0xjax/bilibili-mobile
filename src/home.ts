@@ -8,7 +8,8 @@ export function preloadAnchor() {
   let firstUnloadElem: HTMLElement
   let height: number
 
-  const container = document.querySelector('.container')!
+  const container = document.querySelector('.container')
+  if (!container) return
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       // dev 模式获取不到全部 addedNode
@@ -151,28 +152,30 @@ export function handleVideoCard() {
   judgeHasAi()
 
   let isLoading = false
-  new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (isLoading) {
-        return
-      }
-      mutation.addedNodes.forEach((node) => {
-        if (
-          node.nodeType === Node.ELEMENT_NODE &&
-          (node as HTMLElement).classList.contains('bili-video-card')
-        ) {
-          isLoading = true
-          setTimeout(() => {
-            judgeHasAi()
-            isLoading = false
-          }, 2000)
-        }
-      })
-    })
-  }).observe(
-    document.querySelector('.recommended-container_floor-aside>.container')!,
-    { childList: true },
+  const recommendContainer = document.querySelector(
+    '.recommended-container_floor-aside>.container',
   )
+  if (recommendContainer) {
+    new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (isLoading) {
+          return
+        }
+        mutation.addedNodes.forEach((node) => {
+          if (
+            node.nodeType === Node.ELEMENT_NODE &&
+            (node as HTMLElement).classList.contains('bili-video-card')
+          ) {
+            isLoading = true
+            setTimeout(() => {
+              judgeHasAi()
+              isLoading = false
+            }, 2000)
+          }
+        })
+      })
+    }).observe(recommendContainer, { childList: true })
+  }
 
   function judgeHasAi() {
     const imageLinks = document.querySelectorAll(
@@ -354,7 +357,8 @@ export function handleVideoCard() {
     const match =
       /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.dataset.targetUrl!) ||
       /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.href)
-    const bvid = match![1]
+    const bvid = match?.[1]
+    if (!bvid) return
 
     try {
       const videoInfo = await getVideoInfo(bvid)

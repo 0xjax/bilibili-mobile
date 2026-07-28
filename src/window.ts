@@ -127,7 +127,7 @@ function scrollToHidden(type: string) {
     list: '.playlist-container--left',
   }
 
-  let elem: HTMLElement
+  let elem: HTMLElement | undefined
   if (['video', 'list'].includes(type)) {
     const container = document.querySelector(
       videoMap[type as keyof typeof videoMap],
@@ -161,9 +161,9 @@ function scrollToHidden(type: string) {
     }
   })
 
-  if (['video', 'list'].includes(type)) {
+  if (['video', 'list'].includes(type) && backup) {
     backup.addEventListener('click', () => {
-      elem.scrollTo({ top: 0, behavior: 'smooth' })
+      elem?.scrollTo({ top: 0, behavior: 'smooth' })
       backup.setAttribute('touch-active', '')
       handleTransitionEndOnce(backup, 'transform', () =>
         backup.removeAttribute('touch-active'),

@@ -36,7 +36,7 @@ export async function loadFollowList(orderType: number) {
       console.log('Scroll to bottom')
     }
 
-    const data = await getFollowList(++pageNumber, pageSize, 1)
+    const data = await getFollowList(++pageNumber, pageSize, orderType)
 
     const list = data.list
     list.forEach(addElementByItem)

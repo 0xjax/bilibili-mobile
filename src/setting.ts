@@ -540,7 +540,7 @@ export function handleScriptSetting() {
               (checkbox) => (checkbox as HTMLInputElement).checked,
             )
 
-            if (selectedValues !== oldValues) {
+            if (selectedValues.some((value, index) => value !== oldValues[index])) {
               GM_setValue(menuOptions.key, selectedValues)
               document.head.querySelector('#modify-menu-options')?.remove()
               modifyMenuOptions()

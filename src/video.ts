@@ -5,19 +5,21 @@ import { modifyShadowDOMLate } from './comment.ts'
  * 处理视频的响应操作交互
  */
 export function videoInteraction() {
-  handlePortrait()
-
-  handlelVideoClick()
-
-  handleVideoInteraction()
-
-  foldDescTag()
-
-  closeMiniPlayer()
-
-  setEndingContent()
-
-  modifyShadowDOMLate()
+  // 播放器懒加载或页面结构变动时，单个功能失败不影响其余功能
+  const features = [
+    handlePortrait,
+    handlelVideoClick,
+    handleVideoInteraction,
+    foldDescTag,
+    closeMiniPlayer,
+    setEndingContent,
+    modifyShadowDOMLate,
+  ]
+  for (const feature of features) {
+    try {
+      feature()
+    } catch {}
+  }
 }
 
 let isPortrait = false

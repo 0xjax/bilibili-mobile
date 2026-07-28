@@ -7,10 +7,15 @@ export async function loadAI(card: HTMLElement) {
   )
 
   const aiConclusionRes = await aiConclusion(card)
+  if (!aiConclusionRes) {
+    // 获取失败时移除加载中的卡片
+    aiCardElement.closest('#ai-conclusion-overlay')?.remove()
+    return
+  }
   const bvid = (
     card.querySelector('.bili-video-card__image--link') as HTMLElement
   ).dataset.bvid
-  genterateAIConclusionCard(aiConclusionRes!, aiCardElement, bvid!)
+  genterateAIConclusionCard(aiConclusionRes, aiCardElement, bvid!)
 }
 
 async function aiConclusion(card: HTMLElement) {
@@ -20,7 +25,8 @@ async function aiConclusion(card: HTMLElement) {
   const match =
     /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.dataset.targetUrl!) ||
     /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.href)
-  const bvid = match![1]
+  const bvid = match?.[1]
+  if (!bvid) return
 
   if (aiData[bvid] && aiData[bvid].code === 0) {
     return aiData[bvid]

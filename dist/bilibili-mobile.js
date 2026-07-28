@@ -162,8 +162,8 @@
 			if (["video", "list"].includes(type)) if (currentScrollY > window.innerHeight / 2) backup?.setAttribute("show", "");
 			else backup?.removeAttribute("show");
 		});
-		if (["video", "list"].includes(type)) backup.addEventListener("click", () => {
-			elem.scrollTo({
+		if (["video", "list"].includes(type) && backup) backup.addEventListener("click", () => {
+			elem?.scrollTo({
 				top: 0,
 				behavior: "smooth"
 			});
@@ -631,7 +631,7 @@ div.bili-live-card__info {
 				});
 				settingPanel.querySelector("#setting-conform-3").addEventListener("click", () => {
 					const selectedValues = Array.from(checkboxElements).map((checkbox) => checkbox.checked);
-					if (selectedValues !== oldValues) {
+					if (selectedValues.some((value, index) => value !== oldValues[index])) {
 						_GM_setValue(menuOptions.key, selectedValues);
 						document.head.querySelector("#modify-menu-options")?.remove();
 						modifyMenuOptions();
@@ -1009,7 +1009,7 @@ div.bili-live-card__info {
 				}, 2e3);
 				console.log("Scroll to bottom");
 			}
-			(await getFollowList(++pageNumber, pageSize, 1)).list.forEach(addElementByItem);
+			(await getFollowList(++pageNumber, pageSize, orderType)).list.forEach(addElementByItem);
 		}
 		content.addEventListener("scroll", onScroll);
 		const firstItem = document.querySelector("#follow-list-dialog .header-tabs-panel").firstElementChild;
@@ -1454,7 +1454,7 @@ div.bili-live-card__info {
 			handleTransitionEndOnce(referElement, "opacity", () => {
 				referElement.removeAttribute("display");
 			});
-			if (openedDialog === "'.right-entry__outside[href='//message.bilibili.com']" || openedDialog === ".right-entry__outside[href='//t.bilibili.com/']") updateBadges();
+			if (openedDialog === ".right-entry__outside[href='//message.bilibili.com']" || openedDialog === ".right-entry__outside[href='//t.bilibili.com/']") updateBadges();
 		});
 		function handleTouchMove() {
 			menuOverlay.click();
@@ -1558,7 +1558,7 @@ div.bili-live-card__info {
 				return Math.sqrt(dx * dx + dy * dy);
 			};
 			const calculateCenter = (touches) => {
-				return [(touches[0].clientX + touches[1].clientX) / 2, (touches[0].clientY - touches[1].clientY) / 2];
+				return [(touches[0].clientX + touches[1].clientX) / 2, (touches[0].clientY + touches[1].clientY) / 2];
 			};
 			const calcInitialTranslate = (changedTouches) => {
 				startX = changedTouches[0].clientX;
@@ -1608,7 +1608,7 @@ transform-origin: 50% 50%;
 				lastTouchCount = event.touches.length;
 			};
 			const handleTouchEnd = (event) => {
-				zoomWrap.removeEventListener("touchend", handleTouchMove);
+				zoomWrap.removeEventListener("touchmove", handleTouchMove);
 				if (event.touches.length === 0) {
 					if (initialScale < 1.05) {
 						const offsetX = event.changedTouches[0].clientX - startX;
@@ -2152,12 +2152,17 @@ div.bili-dyn-item-draw__avatar {
 	async function loadAI(card) {
 		const aiCardElement = createAICardElement(card.querySelector(".bili-video-card__image--wrap"));
 		const aiConclusionRes = await aiConclusion(card);
+		if (!aiConclusionRes) {
+			aiCardElement.closest("#ai-conclusion-overlay")?.remove();
+			return;
+		}
 		const bvid = card.querySelector(".bili-video-card__image--link").dataset.bvid;
 		genterateAIConclusionCard(aiConclusionRes, aiCardElement, bvid);
 	}
 	async function aiConclusion(card) {
 		const cardImageLinkElement = card.querySelector(".bili-video-card__image--link");
-		const bvid = (/\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.dataset.targetUrl) || /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.href))[1];
+		const bvid = (/\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.dataset.targetUrl) || /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.href))?.[1];
+		if (!bvid) return;
 		if (aiData[bvid] && aiData[bvid].code === 0) return aiData[bvid];
 		if (cardImageLinkElement.dataset.hasGotAi === void 0) {
 			const cid = cardImageLinkElement.dataset.cid;
@@ -2227,6 +2232,7 @@ div.bili-dyn-item-draw__avatar {
 		let firstUnloadElem;
 		let height;
 		const container = document.querySelector(".container");
+		if (!container) return;
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
 				mutation.addedNodes.forEach((node) => {
@@ -2334,7 +2340,8 @@ div.bili-dyn-item-draw__avatar {
 	function handleVideoCard() {
 		judgeHasAi();
 		let isLoading = false;
-		new MutationObserver((mutations) => {
+		const recommendContainer = document.querySelector(".recommended-container_floor-aside>.container");
+		if (recommendContainer) new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
 				if (isLoading) return;
 				mutation.addedNodes.forEach((node) => {
@@ -2347,7 +2354,7 @@ div.bili-dyn-item-draw__avatar {
 					}
 				});
 			});
-		}).observe(document.querySelector(".recommended-container_floor-aside>.container"), { childList: true });
+		}).observe(recommendContainer, { childList: true });
 		function judgeHasAi() {
 			const imageLinks = document.querySelectorAll(".bili-video-card__image--link");
 			let delay = 0;
@@ -2447,7 +2454,8 @@ div.bili-dyn-item-draw__avatar {
 		}
 		async function judge(card) {
 			const cardImageLinkElement = card.querySelector(".bili-video-card__image--link");
-			const bvid = (/\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.dataset.targetUrl) || /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.href))[1];
+			const bvid = (/\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.dataset.targetUrl) || /\/video\/([A-Za-z0-9]+)/.exec(cardImageLinkElement.href))?.[1];
+			if (!bvid) return;
 			try {
 				const videoInfo = await getVideoInfo(bvid);
 				cardImageLinkElement.dataset.cid = videoInfo.cid;
@@ -2487,13 +2495,18 @@ div.bili-dyn-item-draw__avatar {
 		}
 	}
 	function videoInteraction() {
-		handlePortrait();
-		handlelVideoClick();
-		handleVideoInteraction();
-		foldDescTag();
-		closeMiniPlayer();
-		setEndingContent();
-		modifyShadowDOMLate();
+		const features = [
+			handlePortrait,
+			handlelVideoClick,
+			handleVideoInteraction,
+			foldDescTag,
+			closeMiniPlayer,
+			setEndingContent,
+			modifyShadowDOMLate
+		];
+		for (const feature of features) try {
+			feature();
+		} catch {}
 	}
 	var isPortrait = false;
 	function handlePortrait() {

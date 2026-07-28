@@ -23,7 +23,7 @@ export function touchZoomWrap(zoomWrap: HTMLElement, photoShadow: ShadowRoot) {
 
     const calculateCenter = (touches: TouchList): number[] => {
       const dx = (touches[0].clientX + touches[1].clientX) / 2
-      const dy = (touches[0].clientY - touches[1].clientY) / 2
+      const dy = (touches[0].clientY + touches[1].clientY) / 2
       return [dx, dy]
     }
 
@@ -100,7 +100,7 @@ transform-origin: 50% 50%;
     }
 
     const handleTouchEnd = (event: TouchEvent) => {
-      zoomWrap.removeEventListener('touchend', handleTouchMove)
+      zoomWrap.removeEventListener('touchmove', handleTouchMove)
       if (event.touches.length === 0) {
         if (initialScale < 1.05) {
           const offsetX = event.changedTouches[0].clientX - startX

@@ -201,7 +201,7 @@ export function setMenuBtn() {
 
     if (
       openedDialog ===
-        "'.right-entry__outside[href='//message.bilibili.com']" ||
+        ".right-entry__outside[href='//message.bilibili.com']" ||
       openedDialog === ".right-entry__outside[href='//t.bilibili.com/']"
     ) {
       updateBadges()
