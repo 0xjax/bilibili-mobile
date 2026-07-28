@@ -222,8 +222,8 @@ div.multi-page-v1 .cur-list {
     box-shadow: none !important;
 }
 
-/* 视频页不显示原双击全屏层 */
-#app .bpx-player-video-perch {
+/* 视频页不显示原双击全屏层（限定 #bilibili-player，避免误伤首页预览播放器） */
+#bilibili-player .bpx-player-video-perch {
     max-height: 0;
 }
 
