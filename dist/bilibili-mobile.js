@@ -507,8 +507,10 @@ div.bili-live-card__info {
       "message-sidebar-change-right": "消息页侧边栏靠右",
       "cover-context-menu": "覆盖消息页长按弹窗",
       "home-single-column": "首页单列推荐",
-      "menu-dialog-move-down": "菜单弹窗(收藏、历史等)靠下"
+      "menu-dialog-move-down": "菜单弹窗(收藏、历史等)靠下",
+      "touch-gesture": "触摸手势功能(全屏按钮、滑动关闭搜索)"
     };
+    const keyDefaults = { "touch-gesture": true };
     const customKeyValues = {
       "menu-dialog-move-down-value": "20",
       "video-longpress-speed": "2",
@@ -643,10 +645,8 @@ div.bili-live-card__info {
         '.setting-checkboxes input[type="number"], .setting-checkboxes select'
       );
       checkboxElements.forEach((checkbox, index) => {
-        checkbox.checked = _GM_getValue(
-          Object.keys(keyValues)[index],
-          false
-        );
+        const key = Object.keys(keyValues)[index];
+        checkbox.checked = _GM_getValue(key, keyDefaults[key] ?? false);
       });
       customElements.forEach((elem, index) => {
         elem.value = _GM_getValue(
@@ -664,7 +664,7 @@ div.bili-live-card__info {
         selectedValues.forEach((value, index) => {
           var _a, _b, _c, _d;
           const key = Object.keys(keyValues)[index];
-          if (value !== _GM_getValue(key, false)) {
+          if (value !== _GM_getValue(key, keyDefaults[key] ?? false)) {
             _GM_setValue(key, value);
             switch (key) {
               case "ban-actionbar-hidden":
@@ -978,16 +978,18 @@ div.bili-live-card__info {
     function handleTouchMove() {
       searchOverlay.click();
     }
-    searchOverlay.addEventListener(
-      "touchstart",
-      () => searchOverlay.addEventListener("touchmove", handleTouchMove, {
-        once: true
-      })
-    );
-    searchOverlay.addEventListener(
-      "touchend",
-      () => searchOverlay.removeEventListener("touchmove", handleTouchMove)
-    );
+    if (_GM_getValue("touch-gesture", true)) {
+      searchOverlay.addEventListener(
+        "touchstart",
+        () => searchOverlay.addEventListener("touchmove", handleTouchMove, {
+          once: true
+        })
+      );
+      searchOverlay.addEventListener(
+        "touchend",
+        () => searchOverlay.removeEventListener("touchmove", handleTouchMove)
+      );
+    }
   }
   const BILIBILI_API = "https://api.bilibili.com";
   const aiData = {};
@@ -2506,6 +2508,7 @@ div.bili-dyn-item-draw__avatar {
       });
     }
     function setFullbtn() {
+      if (!_GM_getValue("touch-gesture", true)) return;
       let clickTimer = 0;
       const fullBtn = document.getElementById("full-now");
       function playVideo() {

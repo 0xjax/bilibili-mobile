@@ -1,3 +1,4 @@
+import { GM_getValue } from '$'
 import { setSearchBtn } from './search.ts'
 import { setMenuBtn } from './menu.ts'
 import { setSidebarBtn } from './sidebar.ts'
@@ -101,7 +102,7 @@ export function handleActionbar(type: string): void {
   }
 
   function setFullbtn() {
-    if (!window.TouchGesture?.enableGestures) return
+    if (!GM_getValue('touch-gesture', true)) return
 
     let clickTimer = 0
 

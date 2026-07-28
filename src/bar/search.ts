@@ -1,3 +1,5 @@
+import { GM_getValue } from '$'
+
 /**
  * 设置不同页面的搜索事件的函数
  */
@@ -224,7 +226,7 @@ export function setSearchBtn(type: 'search' | 'space' | string) {
   function handleTouchMove() {
     searchOverlay.click()
   } // searchOverlay.click() 返回值为 undefined
-  if (window.TouchGesture?.enableGestures) {
+  if (GM_getValue('touch-gesture', true)) {
     searchOverlay.addEventListener('touchstart', () =>
       searchOverlay.addEventListener('touchmove', handleTouchMove, {
         once: true,

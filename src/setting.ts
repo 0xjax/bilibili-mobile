@@ -242,7 +242,11 @@ export function handleScriptSetting() {
     'cover-context-menu': '覆盖消息页长按弹窗',
     'home-single-column': '首页单列推荐',
     'menu-dialog-move-down': '菜单弹窗(收藏、历史等)靠下',
+    'touch-gesture': '触摸手势功能(全屏按钮、滑动关闭搜索)',
   } as { [key: string]: string }
+
+  // 默认开启的设置项
+  const keyDefaults = { 'touch-gesture': true } as { [key: string]: boolean }
 
   const customKeyValues = {
     'menu-dialog-move-down-value': '20',
@@ -400,10 +404,8 @@ export function handleScriptSetting() {
     ) as NodeListOf<HTMLInputElement>
 
     checkboxElements.forEach((checkbox, index) => {
-      checkbox.checked = GM_getValue(
-        Object.keys(keyValues)[index],
-        false,
-      ) as boolean
+      const key = Object.keys(keyValues)[index]
+      checkbox.checked = GM_getValue(key, keyDefaults[key] ?? false) as boolean
     })
 
     customElements.forEach((elem, index) => {
@@ -425,7 +427,7 @@ export function handleScriptSetting() {
 
         selectedValues.forEach((value, index) => {
           const key = Object.keys(keyValues)[index]
-          if (value !== GM_getValue(key, false)) {
+          if (value !== GM_getValue(key, keyDefaults[key] ?? false)) {
             GM_setValue(key, value)
             switch (key) {
               case 'ban-actionbar-hidden':
