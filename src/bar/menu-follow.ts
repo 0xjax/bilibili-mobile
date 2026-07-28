@@ -1,4 +1,5 @@
 import { followUser, getFollowList } from '../api.ts'
+import { formatUrl } from '../utils/format.ts'
 
 /**
  * 加载关注列表
@@ -153,9 +154,6 @@ export async function loadFollowList(orderType: number) {
   }
 
   // 若为函数表达式，则不能在声明前调用
-  function formatUrl(url: string) {
-    return url.slice(url.indexOf(':') + 1)
-  }
   function desc(item: Record<string, string | Record<string, string>>) {
     return (item.official_verify as Record<string, string>).desc || item.sign
   }

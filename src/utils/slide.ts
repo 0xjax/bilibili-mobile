@@ -4,14 +4,12 @@
  * @param touchXThreshold - 触发滑动的阈值
  * @param onSlideLeft - 向左滑动时的回调函数
  * @param onSlideRight - 向右滑动时的回调函数
- * @param removeListener - 是否移除监听器，默认为 false
  */
 export function setupSlide(
   container: HTMLElement,
   touchXThreshold: number,
   onSlideLeft: () => void,
   onSlideRight: () => void,
-  removeListener?: boolean,
 ) {
   let startX = 0
   let startY = 0
@@ -37,11 +35,6 @@ export function setupSlide(
     }
   }
 
-  if (removeListener) {
-    container.removeEventListener('touchstart', handleTouchStart)
-    container.removeEventListener('touchend', handleTouchEnd)
-  } else {
-    container.addEventListener('touchstart', handleTouchStart)
-    container.addEventListener('touchend', handleTouchEnd)
-  }
+  container.addEventListener('touchstart', handleTouchStart)
+  container.addEventListener('touchend', handleTouchEnd)
 }

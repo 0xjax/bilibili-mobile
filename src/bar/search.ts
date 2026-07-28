@@ -142,7 +142,7 @@ export function setSearchBtn(type: 'search' | 'space' | string) {
         ) as HTMLElement
 
         event.preventDefault()
-        spaceInput.value = input!.value as string
+        spaceInput.value = input!.value
         spaceInput.dispatchEvent(new Event('input', { bubbles: true }))
         spaceSearchBtn.click()
 

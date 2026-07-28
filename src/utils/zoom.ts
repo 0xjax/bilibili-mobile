@@ -82,18 +82,14 @@ transform-origin: 50% 50%;
         calcInitialTranslate(event.touches)
         initialScale = getCurrentScale()
       } else if (event.touches.length === 1 && initialScale > 1.05) {
-        if (initialScale > 1.05) {
-          // 防止未还原到位
-          const deltaX =
-            (event.changedTouches[0].clientX - startX) / initialScale
-          const deltaY =
-            (event.changedTouches[0].clientY - startY) / initialScale
+        // 防止未还原到位
+        const deltaX = (event.changedTouches[0].clientX - startX) / initialScale
+        const deltaY = (event.changedTouches[0].clientY - startY) / initialScale
 
-          zoomWrap.style.cssText = zoomWrap.style.cssText.replace(
-            /translate\(-?[0-9.]+px, -?[0-9.]+px\)/,
-            `translate(${initialTransformX + deltaX}px, ${initialTransformY + deltaY}px)`,
-          )
-        }
+        zoomWrap.style.cssText = zoomWrap.style.cssText.replace(
+          /translate\(-?[0-9.]+px, -?[0-9.]+px\)/,
+          `translate(${initialTransformX + deltaX}px, ${initialTransformY + deltaY}px)`,
+        )
       }
 
       lastTouchCount = event.touches.length

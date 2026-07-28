@@ -45,8 +45,8 @@ export function countViewTime() {
   if (!GM_getValue('view-time-toast', true)) return
 
   window.onload = function () {
-    let storedTime = GM_getValue('view-time', 0) as number
-    const storedTimestamp = GM_getValue('timestamp', Date.now()) as number
+    let storedTime = GM_getValue('view-time', 0)
+    const storedTimestamp = GM_getValue('timestamp', Date.now())
 
     const diff = Math.floor((Date.now() - storedTimestamp) / 1000 / 60)
     storedTime = diff < 3 ? storedTime + diff : 0

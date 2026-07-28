@@ -254,7 +254,7 @@ function handleVideoInteraction() {
     startY = event.touches[0].clientY
     startTime = video.currentTime
     times = Number(GM_getValue('video-longpress-speed', '2'))
-    isSlideAllowed = GM_getValue('allow-video-slid', false) as boolean
+    isSlideAllowed = GM_getValue('allow-video-slid', false)
 
     // 设置初始检测定时器
     timeoutId = setTimeout(() => {

@@ -1,4 +1,5 @@
 import { getHistoryList, getHistorySearchList } from '../api.ts'
+import { formatUrl } from '../utils/format.ts'
 
 // 设置历史自动展开
 export async function handleHistoryShowMore() {
@@ -185,8 +186,6 @@ export async function handleHistoryShowMore() {
     })
     historyContent.appendChild(record)
   }
-
-  const formatUrl = (url: string) => url.slice(url.indexOf(':') + 1)
 
   function formatProgressTime(seconds: number) {
     const hrs = Math.floor(seconds / 3600) // Math.floor() 向下取整

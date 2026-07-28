@@ -3,7 +3,6 @@ export const BILIBILI_API = 'https://api.bilibili.com'
 export interface AIConclusion {
   code: number
   bvid: string
-  aiCardElement: HTMLElement
   model_result: {
     summary: string
     outline: {

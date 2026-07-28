@@ -47,7 +47,7 @@ export function preloadAnchor() {
 
 // 控制首页头图函数
 export function handleHeaderImage() {
-  const source = GM_getValue('header-image-source', 'unsplash') as string
+  const source = GM_getValue<string>('header-image-source', 'unsplash')
   const mapping = {
     bing: 'https://api.suyanw.cn/api/bing.php',
     unsplash: 'https://unsplash.it/1600/900?random',
@@ -119,7 +119,7 @@ export function handleHeaderImage() {
     } else {
       getImage(url)
         .then((img) => {
-          const base64Data = imageToBase64(img as HTMLImageElement)
+          const base64Data = imageToBase64(img)
           storeImage(key, base64Data)
           applyStyle(elementSelector, base64Data)
         })

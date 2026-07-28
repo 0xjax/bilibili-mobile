@@ -83,7 +83,7 @@ function foldDescTag() {
 
 // 脚本预加载设置
 export function handleScriptPreSetting() {
-  const defaultValue = Array(11).fill(false)
+  const defaultValue: boolean[] = Array(11).fill(false)
 
   const css = {
     css1: `
@@ -138,11 +138,10 @@ export function handleScriptPreSetting() {
 
   // 形参 diference 隐式声明成 let
   function readScriptSetting(diference: boolean[] | undefined = undefined) {
-    // 傻逼 GM_getValue 获取未设的值就报错加阻塞线程，值不自动转字符串
     const settingShowHidden = GM_getValue(
       'settingShowHidden',
       defaultValue,
-    ) as boolean[]
+    )
     const values = Object.values(css) // 可枚举属性值，返回 [v1, v2]
 
     if (diference) {
@@ -195,7 +194,7 @@ export function handleScriptPreSetting() {
     const oldValues = GM_getValue(
       'settingShowHidden',
       defaultValue,
-    ) as boolean[]
+    )
     for (const [index, element] of Array.from(checkboxElements).entries()) {
       element.checked = oldValues[index]
     }
@@ -206,7 +205,7 @@ export function handleScriptPreSetting() {
         const oldValues = GM_getValue(
           'settingShowHidden',
           defaultValue,
-        ) as boolean[]
+        )
         const selectedValues = Array.from(checkboxElements).map(
           (checkbox) => checkbox.checked,
         )
@@ -266,7 +265,7 @@ export function handleScriptSetting() {
 
   const menuOptions = {
     key: 'modify-menu-options',
-    value: [true, true, ...Array(6).fill(false)],
+    value: [true, true, ...Array(6).fill(false)] as boolean[],
     names: ['热门', '分类', '消息', '动态', '收藏', '历史', '主页', '关注'], // 菜单选项排序
   }
 
@@ -299,7 +298,7 @@ export function handleScriptSetting() {
     }
     // home-single-column 由预加载初始化
     if (
-      !(GM_getValue(menuOptions.key, menuOptions.value) as boolean[]).every(
+      !(GM_getValue(menuOptions.key, menuOptions.value)).every(
         (item) => item === false,
       )
     ) {
@@ -348,7 +347,7 @@ export function handleScriptSetting() {
   }
 
   function modifyMenuOptions() {
-    const options = GM_getValue(menuOptions.key, menuOptions.value) as boolean[]
+    const options = GM_getValue(menuOptions.key, menuOptions.value)
     let selector = ''
     options.forEach((value, index) => {
       if (value) {
@@ -409,14 +408,14 @@ export function handleScriptSetting() {
 
     checkboxElements.forEach((checkbox, index) => {
       const key = Object.keys(keyValues)[index]
-      checkbox.checked = GM_getValue(key, keyDefaults[key] ?? false) as boolean
+      checkbox.checked = GM_getValue(key, keyDefaults[key] ?? false)
     })
 
     customElements.forEach((elem, index) => {
       elem.value = GM_getValue(
         Object.keys(customKeyValues)[index],
         Object.values(customKeyValues)[index],
-      ) as string
+      )
     })
 
     settingPanel
@@ -531,7 +530,7 @@ export function handleScriptSetting() {
         const oldValues = GM_getValue(
           menuOptions.key,
           menuOptions.value,
-        ) as boolean[]
+        )
 
         checkboxElements.forEach((element, index) => {
           element.checked = oldValues[index]

@@ -1,4 +1,5 @@
 import { getDynamicList } from '../api.ts'
+import { formatUrl } from '../utils/format.ts'
 
 // 设置动态自动展开
 export function handleDynamicShowMore() {
@@ -100,6 +101,4 @@ export function handleDynamicShowMore() {
     })
     dynamicAll?.appendChild(record)
   }
-
-  const formatUrl = (url: string) => url.slice(url.indexOf(':') + 1)
 }
