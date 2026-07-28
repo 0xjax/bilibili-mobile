@@ -411,7 +411,7 @@ div#navbar {
             'click',
             (event) => {
               event.stopImmediatePropagation() // 禁用点击
-                ; (photoShadow?.querySelector('#close') as HTMLElement).click()
+                ; (photoShadow?.querySelector('#close') as HTMLElement | null)?.click()
             },
             { capture: true, once: true },
           )
