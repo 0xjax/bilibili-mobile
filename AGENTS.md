@@ -1,0 +1,17 @@
+# bilibili-mobile
+
+B 站移动端优化油猴脚本，vite + vite-plugin-monkey 构建。
+
+## Commands
+
+- 包管理用 **bun**，NEVER npm/npx/pnpm
+- `bun run dev` / `build` / `lint`（oxlint）/ `typecheck`（tsc --noEmit）
+
+## Conventions
+
+- `dist/` 随源码一起提交：改动 `src/` 后必须 `bun run build`，产物一并提交
+- userscript 元数据（含版本号）在 `vite.config.js`，改版本号去那里
+- GM API 从 `'$'` 导入（`GM_getValue` 等），NEVER 直接访问全局 GM_* 或 window 挂载
+- 新增设置项 → `src/setting.ts` 的 `keyValues` 加键；功能代码用 `GM_getValue(key, default)` 读取
+- 样式在 `src/style/*.css`，以 `?inline` 导入后注入
+- 代码注释与提交信息用中文；提交信息遵循 Conventional Commits
