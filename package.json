@@ -11,5 +11,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "js-md5": "^0.9.2"
   }
 }

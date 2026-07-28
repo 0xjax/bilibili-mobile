@@ -1,4 +1,5 @@
 // fork 自 BiliPlus 项目：https://github.com/0xlau/biliplus
+import { md5 } from 'js-md5'
 import { BILIBILI_API } from './values.ts'
 
 const mixinKeyEncTab = [
@@ -45,8 +46,8 @@ function encWbi(
     })
     .join('&')
 
-  // 在脚本 metadata 中引用 AI 总结使用的 md5 算法
-  const wbiSign = md5(query + mixinKey) // 计算 w_rid
+  // wbi 签名，计算 w_rid
+  const wbiSign = md5(query + mixinKey)
 
   return `${query}&w_rid=${wbiSign}`
 }

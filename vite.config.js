@@ -20,7 +20,6 @@ export default defineConfig({
                     "https://message.bilibili.com/pages/nav/*",
                     "https://www.bilibili.com/blackboard/comment-detail.html?*",
                 ],
-                require: ["https://unpkg.com/js-md5@0.9.2/src/md5.js"],
             },
             build: {
                 fileName: "bilibili-mobile.js", // 输出文件名
