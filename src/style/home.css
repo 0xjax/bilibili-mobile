@@ -47,7 +47,7 @@ body,
 .container>*:has(.bili-video-card__info--ad),
 .container>*:has(.bili-video-card__info--creative-ad),
 .container>*:has([href^="//cm.bilibili.com/cm/api/"]),
-.floor-single-card {
+.container>.floor-single-card {
     display: none !important;
 }
 

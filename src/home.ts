@@ -10,6 +10,16 @@ export function preloadAnchor() {
 
   const container = document.querySelector('.container')
   if (!container) return
+
+  function captureAnchor(node: Node) {
+    anchor = node
+    firstUnloadElem = document.querySelector(
+      '.container>.bili-video-card:not(.is-rcmd)',
+    )!
+    height = firstUnloadElem.clientHeight + 8
+    observer.disconnect()
+  }
+
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       // dev 模式获取不到全部 addedNode
@@ -18,17 +28,16 @@ export function preloadAnchor() {
           node.nodeType === Node.ELEMENT_NODE &&
           (node as HTMLElement).className === 'load-more-anchor'
         ) {
-          anchor = node
-          firstUnloadElem = document.querySelector(
-            '.container>.bili-video-card:not(.is-rcmd)',
-          )!
-          height = firstUnloadElem.clientHeight + 8
-          observer.disconnect()
+          captureAnchor(node)
         }
       })
     })
   })
   observer.observe(container, { childList: true })
+
+  // 锚点可能已先于观察器渲染完毕，立即检查一次
+  const existingAnchor = container.querySelector('.load-more-anchor')
+  if (existingAnchor) captureAnchor(existingAnchor)
 
   function preload() {
     if (firstUnloadElem?.getBoundingClientRect().top < height * 6) {
