@@ -224,12 +224,14 @@ export function setSearchBtn(type: 'search' | 'space' | string) {
   function handleTouchMove() {
     searchOverlay.click()
   } // searchOverlay.click() 返回值为 undefined
-  searchOverlay.addEventListener('touchstart', () =>
-    searchOverlay.addEventListener('touchmove', handleTouchMove, {
-      once: true,
-    }),
-  )
-  searchOverlay.addEventListener('touchend', () =>
-    searchOverlay.removeEventListener('touchmove', handleTouchMove),
-  )
+  if (window.TouchGesture?.enableGestures) {
+    searchOverlay.addEventListener('touchstart', () =>
+      searchOverlay.addEventListener('touchmove', handleTouchMove, {
+        once: true,
+      }),
+    )
+    searchOverlay.addEventListener('touchend', () =>
+      searchOverlay.removeEventListener('touchmove', handleTouchMove),
+    )
+  }
 }
