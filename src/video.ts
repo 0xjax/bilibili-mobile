@@ -1,5 +1,5 @@
 import { GM_getValue } from '$'
-import { modifyShadowDOMLate } from './comment.ts'
+import { handleCommentShadow } from './comment.ts'
 
 /**
  * 处理视频的响应操作交互
@@ -13,7 +13,7 @@ export function videoInteraction() {
     foldDescTag,
     closeMiniPlayer,
     setEndingContent,
-    modifyShadowDOMLate,
+    handleCommentShadow,
   ]
   for (const feature of features) {
     try {

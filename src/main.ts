@@ -26,7 +26,10 @@ import { preloadAnchor, handleHeaderImage, handleVideoCard } from './home.js'
 import { videoInteraction } from './video.js'
 import { createUnfoldBtn, coverContextMenu } from './message.ts'
 import { waitDOMContentLoaded } from './utils/wait.ts'
+import { initShadowHook } from './utils/shadow.ts'
 ;(function () {
+  initShadowHook() // 必须先于页面脚本拦截 attachShadow
+
   if (window.top !== window.self) {
     return
   } // 检查当前执行环境是否为顶级窗口

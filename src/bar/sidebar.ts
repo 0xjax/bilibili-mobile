@@ -1,4 +1,3 @@
-import { modifyShadowDOMLate } from '../comment.ts'
 import { handleTransitionEndOnce } from '../utils/transition.ts'
 
 /* 使用 sessionStorage + heade style 绕过 DOM 依赖以解决刷新缓加载导致的内容跳动。
@@ -55,8 +54,7 @@ export function setSidebarBtn(type: 'video' | 'list' | 'message'): void {
         handleTransitionEndOnce(rightContainer, 'transform', () => {
           rightContainer.scrollTop = 0
         })
-        // 此处不要使用监听器，否则会干扰原函数执行
-        modifyShadowDOMLate(true)
+        // 评论区样式由 attachShadow 钩子自动应用，无需手动重刷
       }
     })
   }

@@ -1546,441 +1546,6 @@ div.bili-live-card__info {
 			loadFollowList(1);
 		}
 	}
-	function touchZoomWrap(zoomWrap, photoShadow) {
-		if (zoomWrap) {
-			let initialDistance = 0;
-			let initialScale = 1;
-			let transformOrigin = {
-				x: 0,
-				y: 0
-			};
-			let startX = 0;
-			let startY = 0;
-			let initialTransformX = 0;
-			let initialTransformY = 0;
-			let lastTouchCount = 0;
-			const calculateDistance = (touches) => {
-				const dx = touches[0].clientX - touches[1].clientX;
-				const dy = touches[0].clientY - touches[1].clientY;
-				return Math.sqrt(dx * dx + dy * dy);
-			};
-			const calculateCenter = (touches) => {
-				return [(touches[0].clientX + touches[1].clientX) / 2, (touches[0].clientY + touches[1].clientY) / 2];
-			};
-			const calcInitialTranslate = (changedTouches) => {
-				startX = changedTouches[0].clientX;
-				startY = changedTouches[0].clientY;
-				initialTransformX = +zoomWrap.style.transform.match(/translate\((-?[0-9.]+)px, -?[0-9.]+px\)/)[1];
-				initialTransformY = +zoomWrap.style.transform.match(/translate\(-?[0-9.]+px, (-?[0-9.]+)px\)/)[1];
-			};
-			const handleTouchStart = (event) => {
-				if (zoomWrap.style.cssText.match(/scale3d\(1, 1, 1\)/)) zoomWrap.style.cssText = `transform: scale(1) translate(0px, 0px) !important;
-transform-origin: 50% 50%;
-`;
-				if (event.touches.length === 2) {
-					initialDistance = calculateDistance(event.touches);
-					const center = calculateCenter(event.touches);
-					transformOrigin = {
-						x: center[0],
-						y: center[1]
-					};
-					updateTransformOrigin();
-				} else if (event.touches.length === 1) calcInitialTranslate(event.changedTouches);
-				lastTouchCount = event.touches.length;
-				initialScale = getCurrentScale();
-				zoomWrap.addEventListener("touchmove", handleTouchMove, { passive: false });
-			};
-			const handleTouchMove = (event) => {
-				if (event.touches.length === 2) {
-					const currentDistance = calculateDistance(event.touches);
-					const scale = Math.max(1, initialScale * (currentDistance / initialDistance));
-					const center = calculateCenter(event.touches);
-					transformOrigin = {
-						x: center[0],
-						y: center[1]
-					};
-					updateTransform(scale);
-					updateTransformOrigin();
-					event.preventDefault();
-				} else if (event.touches.length === 1 && lastTouchCount === 2) {
-					calcInitialTranslate(event.touches);
-					initialScale = getCurrentScale();
-				} else if (event.touches.length === 1 && initialScale > 1.05) {
-					const deltaX = (event.changedTouches[0].clientX - startX) / initialScale;
-					const deltaY = (event.changedTouches[0].clientY - startY) / initialScale;
-					zoomWrap.style.cssText = zoomWrap.style.cssText.replace(/translate\(-?[0-9.]+px, -?[0-9.]+px\)/, `translate(${initialTransformX + deltaX}px, ${initialTransformY + deltaY}px)`);
-				}
-				lastTouchCount = event.touches.length;
-			};
-			const handleTouchEnd = (event) => {
-				zoomWrap.removeEventListener("touchmove", handleTouchMove);
-				if (event.touches.length === 0) {
-					if (initialScale < 1.05) {
-						const offsetX = event.changedTouches[0].clientX - startX;
-						const offsetY = event.changedTouches[0].clientY - startY;
-						if (Math.abs(offsetX) > 55 && Math.abs(offsetY / offsetX) < 1 / 2) if (offsetX > 0) photoShadow.querySelector("#prev")?.click();
-						else photoShadow.querySelector("#next")?.click();
-					}
-				}
-				if (event.touches.length === 1) calcInitialTranslate(event.changedTouches);
-			};
-			const getCurrentScale = () => {
-				const match = zoomWrap.style.transform.match(/scale\(([0-9.]+)\)/);
-				return match ? parseFloat(match[1]) : 1;
-			};
-			const updateTransform = (scale) => {
-				const newTransform = zoomWrap.style.transform.replace(/scale\([0-9.]+\)/, `scale(${scale})`);
-				zoomWrap.style.transform = newTransform;
-			};
-			const updateTransformOrigin = () => {
-				zoomWrap.style.transformOrigin = `${transformOrigin.x}px ${transformOrigin.y}px`;
-			};
-			zoomWrap.addEventListener("touchstart", handleTouchStart);
-			zoomWrap.addEventListener("touchend", handleTouchEnd);
-		}
-	}
-	function modifyShadowDOMLate(isDynamicRefresh = false) {
-		let commentsShadow = null;
-		let commentsHeaderShadow = null;
-		let headerBoxShadow = null;
-		const comment = document.getElementById("commentapp");
-		if (!comment) return;
-		const observer = new MutationObserver(handleCommentMutation);
-		observer.observe(comment, {
-			childList: true,
-			subtree: true
-		});
-		function handleCommentMutation(mutations) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "bili-comments") {
-						observeComments();
-						observer.disconnect();
-					}
-				});
-			});
-		}
-		function observeComments() {
-			commentsShadow = document.querySelector("bili-comments")?.shadowRoot;
-			if (!commentsShadow) return;
-			new MutationObserver(handleCommentsMutation).observe(commentsShadow, {
-				childList: true,
-				subtree: true
-			});
-			appendStyle(commentsShadow, `
-        div#contents {
-          padding-top: 0;
-        }`);
-		}
-		function handleCommentsMutation(mutations) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.id === "contents") {
-						observeHeader();
-						observeContent();
-					} else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "bili-comment-thread-renderer") {
-						const threadShadow = node.shadowRoot;
-						let observer;
-						const callback = (mutations) => handleContentMutation(mutations, observer);
-						observer = new MutationObserver(callback);
-						observer.observe(threadShadow, {
-							childList: true,
-							subtree: true
-						});
-					}
-				});
-			});
-		}
-		function observeHeader() {
-			commentsHeaderShadow = commentsShadow?.querySelector("bili-comments-header-renderer")?.shadowRoot;
-			if (!commentsHeaderShadow) return;
-			let observer;
-			const callback = (mutations) => handleHeaderMutation(mutations, observer);
-			observer = new MutationObserver(callback);
-			observer.observe(commentsHeaderShadow, {
-				childList: true,
-				subtree: true
-			});
-			appendStyle(commentsHeaderShadow, `
-div#commentbox {
-  position: fixed;
-  left: 0;
-  bottom: var(--actionbar-height);
-  z-index: 10;
-  width: calc(100% - (100% - 200px) / 3);
-  padding: 7px calc((100% - 200px) / 6);
-  transition: calc(var(--actionbar-time)*1.40) ease-in;
-  display: var(--commentbox-display);
-  transform: var(--shadow-transform);
-  backdrop-filter: blur(3px);
-  background-color: rgba(255, 255, 255, .6);
-}
-div#commentbox[style] {
-  display: none;
-}
-div#commentbox[style]+.bili-comments-bottom-fixed-wrapper {
-  width: 100% !important;
-  bottom: var(--actionbar-height) !important;
-}
-div#commentbox[style]+.bili-comments-bottom-fixed-wrapper>div {
-  padding: 8px 12px !important;
-  width: calc(100% - 24px) !important;
-  transition: calc(var(--actionbar-time)* 1.40) ease-in;
-  display: var(--commentbox-display);
-  transform: var(--shadow-transform);
-  backdrop-filter: blur(3px);
-  background-color: rgba(255, 255, 255, .6) !important;
-  border: none !important;
-}
-div#navbar {
-  margin-bottom: 0;
-}
-#notice {
-  display: none;
-}`);
-		}
-		function handleHeaderMutation(mutations, observer) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "div" && node.id === "commentbox") {
-						observeHeader2();
-						observer.disconnect();
-					}
-				});
-			});
-		}
-		function observeHeader2() {
-			headerBoxShadow = commentsHeaderShadow?.querySelector("bili-comment-box")?.shadowRoot;
-			if (!headerBoxShadow) return;
-			let observer;
-			const callback = (mutations) => handleHeader2Mutation(mutations, observer);
-			observer = new MutationObserver(callback);
-			observer.observe(headerBoxShadow, {
-				childList: true,
-				subtree: true
-			});
-			appendStyle(headerBoxShadow, `
-        :host {
-          display: var(--commentbox-display) !important;
-        }
-        div#user-avatar {
-          display: none;
-        }
-        div#comment-area {
-          width: 100%;
-        }
-        div#editor {
-          border-radius: 13px;
-          padding: 0;
-          border: none;
-        }`);
-			const headerVote = commentsHeaderShadow?.querySelector("bili-comments-vote-card");
-			if (headerVote) appendStyle(headerVote.shadowRoot, `.option.left,
-        .option.right {
-          min-width: 0 !important;
-        }
-        #card {
-          padding-top: 27px !important;
-        }
-        #info {
-          transform: translateY(-23px);
-        }
-        #title {
-          overflow: visible !important;
-          white-space: nowrap;
-          position: absolute;
-        }
-        #desc {
-          padding-top: 20px;
-        }`);
-		}
-		function handleHeader2Mutation(mutations, observer) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "div" && node.id === "comment-area") {
-						observeHeader3();
-						observer.disconnect();
-					}
-				});
-			});
-		}
-		function observeHeader3() {
-			const oldTextarea = headerBoxShadow?.querySelector("bili-comment-textarea");
-			const textarea = oldTextarea ? oldTextarea : headerBoxShadow?.querySelector("bili-comment-rich-textarea");
-			if (oldTextarea) appendStyle(textarea.shadowRoot, `textarea#input {
-            line-height: 26px;
-            min-height: 26px;
-            height: 26px !important;
-          }`);
-			else appendStyle(textarea.shadowRoot, `div#input, div.brt-root {
-        line-height: 26px;
-        min-height: 26px;
-        --brt-line-height: 26px;
-      }`);
-		}
-		function observeContent() {
-			(commentsShadow?.querySelectorAll("bili-comment-thread-renderer"))?.forEach((thread) => {
-				const threadShadow = thread.shadowRoot;
-				let observer;
-				const callback = (mutations) => handleContentMutation(mutations, observer);
-				observer = new MutationObserver(callback);
-				observer.observe(threadShadow, {
-					childList: true,
-					subtree: true
-				});
-			});
-		}
-		function handleContentMutation(mutations, observer) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "div" && node.id === "replies") {
-						observeContent2(mutation.target);
-						observer.disconnect();
-					}
-				});
-			});
-		}
-		function observeContent2(threadShadow) {
-			const commentShadow = threadShadow?.querySelector("bili-comment-renderer")?.shadowRoot;
-			const repliesShadow = threadShadow?.querySelector("bili-comment-replies-renderer")?.shadowRoot;
-			appendStyle(commentShadow, `
-        div#body {
-          padding: 4px 0 0 44px;
-          --bili-comment-hover-more-display: block;
-        }
-        a#user-avatar {
-          left: 0;
-          top: 12px;
-        }`);
-			appendStyle(repliesShadow, `
-        div#expander {
-          padding-left: 40px;
-        }`);
-			let observer;
-			const callback = (mutations) => handleCommentShadowMutation(mutations, observer);
-			observer = new MutationObserver(callback);
-			observer.observe(commentShadow, {
-				childList: true,
-				subtree: true
-			});
-			let observer2;
-			const callback2 = (mutations) => handleRepliesShadowMutation(mutations, observer2);
-			observer2 = new MutationObserver(callback2);
-			observer2.observe(repliesShadow, {
-				childList: true,
-				subtree: true
-			});
-		}
-		function handleCommentShadowMutation(mutations, observer) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "div" && node.id === "body") {
-						const avatarShadow = mutation.target.querySelector("bili-avatar")?.shadowRoot;
-						appendStyle(avatarShadow, `
-              .layer.center {
-                width: 48px !important;
-                height: 48px !important;
-              }`);
-						observer.disconnect();
-					}
-				});
-			});
-		}
-		function handleRepliesShadowMutation(mutations, observer) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "div" && node.id === "expander") mutation.target.querySelectorAll("bili-comment-reply-renderer").forEach((reply) => {
-						const replyShadow = reply.shadowRoot;
-						appendStyle(replyShadow, `
-                div#body {
-                  padding: 4px 0 4px 29px;
-                  --bili-comment-hover-more-display: block;
-                }`);
-						observer.disconnect();
-					});
-				});
-			});
-		}
-		function appendStyle(shadowRoot, cssText) {
-			const style = document.createElement("style");
-			style.textContent = cssText;
-			shadowRoot.appendChild(style);
-		}
-		if (isDynamicRefresh) return;
-		new MutationObserver((mutations) => {
-			handleBodyMutation(mutations);
-			handleBodyMutation2(mutations);
-		}).observe(document.body, { childList: true });
-		function handleBodyMutation(mutations) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "bili-photoswipe") {
-						const photoShadow = node.shadowRoot;
-						const zoomWrap = photoShadow?.querySelector("#zoom-wrap");
-						zoomWrap.addEventListener("click", (event) => {
-							event.stopImmediatePropagation();
-							(photoShadow?.querySelector("#close"))?.click();
-						}, {
-							capture: true,
-							once: true
-						});
-						touchZoomWrap(zoomWrap, photoShadow);
-						appendStyle(photoShadow, `
-#container {z-index:3;}
-#thumb {z-index: 4;}
-#prev, #next, #close {visibility: hidden;}
-#item {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-#zoom-wrap {
-  position: unset !important;
-  transform: none !important;
-}
-`);
-					}
-				});
-			});
-		}
-		function handleBodyMutation2(mutations) {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toLowerCase() === "bili-comments-popup") {
-						const iframe = node.querySelector("iframe");
-						iframe.addEventListener("load", () => {
-							const contentDocument = iframe.contentDocument;
-							const style = contentDocument.createElement("style");
-							style.textContent = `
-div.bili-dyn-item-draw {
-  min-width: 0;
-  padding-left: 58px;
-}
-div.bili-dyn-item-draw__avatar {
-  width: 58px;
-  height: 58px;
-}
-.bili-album__preview__picture {
-  max-width: 100%;
-  height: auto !important;
-}
-.bili-album__preview[class*=grid] {
-  max-width: 100%;
-}
-.bili-album__preview[class*=grid] .bili-album__preview__picture {
-    margin-bottom: 4px;
-}
-                `;
-							contentDocument.head.appendChild(style);
-						});
-						node.addEventListener("click", () => {
-							node.shadowRoot.querySelector("#close").click();
-						}, { once: true });
-					}
-				});
-			});
-		}
-	}
 	function setSidebarBtn(type) {
 		const videoMap = {
 			video: [".right-container", ".rec-footer"],
@@ -2006,7 +1571,6 @@ div.bili-dyn-item-draw__avatar {
 					handleTransitionEndOnce(rightContainer, "transform", () => {
 						rightContainer.scrollTop = 0;
 					});
-					modifyShadowDOMLate(true);
 				}
 			});
 		}
@@ -2502,6 +2066,336 @@ div.bili-dyn-item-draw__avatar {
 			});
 		}
 	}
+	function touchZoomWrap(zoomWrap, photoShadow) {
+		if (zoomWrap) {
+			let initialDistance = 0;
+			let initialScale = 1;
+			let transformOrigin = {
+				x: 0,
+				y: 0
+			};
+			let startX = 0;
+			let startY = 0;
+			let initialTransformX = 0;
+			let initialTransformY = 0;
+			let lastTouchCount = 0;
+			const calculateDistance = (touches) => {
+				const dx = touches[0].clientX - touches[1].clientX;
+				const dy = touches[0].clientY - touches[1].clientY;
+				return Math.sqrt(dx * dx + dy * dy);
+			};
+			const calculateCenter = (touches) => {
+				return [(touches[0].clientX + touches[1].clientX) / 2, (touches[0].clientY + touches[1].clientY) / 2];
+			};
+			const calcInitialTranslate = (changedTouches) => {
+				startX = changedTouches[0].clientX;
+				startY = changedTouches[0].clientY;
+				initialTransformX = +zoomWrap.style.transform.match(/translate\((-?[0-9.]+)px, -?[0-9.]+px\)/)[1];
+				initialTransformY = +zoomWrap.style.transform.match(/translate\(-?[0-9.]+px, (-?[0-9.]+)px\)/)[1];
+			};
+			const handleTouchStart = (event) => {
+				if (zoomWrap.style.cssText.match(/scale3d\(1, 1, 1\)/)) zoomWrap.style.cssText = `transform: scale(1) translate(0px, 0px) !important;
+transform-origin: 50% 50%;
+`;
+				if (event.touches.length === 2) {
+					initialDistance = calculateDistance(event.touches);
+					const center = calculateCenter(event.touches);
+					transformOrigin = {
+						x: center[0],
+						y: center[1]
+					};
+					updateTransformOrigin();
+				} else if (event.touches.length === 1) calcInitialTranslate(event.changedTouches);
+				lastTouchCount = event.touches.length;
+				initialScale = getCurrentScale();
+				zoomWrap.addEventListener("touchmove", handleTouchMove, { passive: false });
+			};
+			const handleTouchMove = (event) => {
+				if (event.touches.length === 2) {
+					const currentDistance = calculateDistance(event.touches);
+					const scale = Math.max(1, initialScale * (currentDistance / initialDistance));
+					const center = calculateCenter(event.touches);
+					transformOrigin = {
+						x: center[0],
+						y: center[1]
+					};
+					updateTransform(scale);
+					updateTransformOrigin();
+					event.preventDefault();
+				} else if (event.touches.length === 1 && lastTouchCount === 2) {
+					calcInitialTranslate(event.touches);
+					initialScale = getCurrentScale();
+				} else if (event.touches.length === 1 && initialScale > 1.05) {
+					const deltaX = (event.changedTouches[0].clientX - startX) / initialScale;
+					const deltaY = (event.changedTouches[0].clientY - startY) / initialScale;
+					zoomWrap.style.cssText = zoomWrap.style.cssText.replace(/translate\(-?[0-9.]+px, -?[0-9.]+px\)/, `translate(${initialTransformX + deltaX}px, ${initialTransformY + deltaY}px)`);
+				}
+				lastTouchCount = event.touches.length;
+			};
+			const handleTouchEnd = (event) => {
+				zoomWrap.removeEventListener("touchmove", handleTouchMove);
+				if (event.touches.length === 0) {
+					if (initialScale < 1.05) {
+						const offsetX = event.changedTouches[0].clientX - startX;
+						const offsetY = event.changedTouches[0].clientY - startY;
+						if (Math.abs(offsetX) > 55 && Math.abs(offsetY / offsetX) < 1 / 2) if (offsetX > 0) photoShadow.querySelector("#prev")?.click();
+						else photoShadow.querySelector("#next")?.click();
+					}
+				}
+				if (event.touches.length === 1) calcInitialTranslate(event.changedTouches);
+			};
+			const getCurrentScale = () => {
+				const match = zoomWrap.style.transform.match(/scale\(([0-9.]+)\)/);
+				return match ? parseFloat(match[1]) : 1;
+			};
+			const updateTransform = (scale) => {
+				const newTransform = zoomWrap.style.transform.replace(/scale\([0-9.]+\)/, `scale(${scale})`);
+				zoomWrap.style.transform = newTransform;
+			};
+			const updateTransformOrigin = () => {
+				zoomWrap.style.transformOrigin = `${transformOrigin.x}px ${transformOrigin.y}px`;
+			};
+			zoomWrap.addEventListener("touchstart", handleTouchStart);
+			zoomWrap.addEventListener("touchend", handleTouchEnd);
+		}
+	}
+	var createdRoots = [];
+	var handlers = [];
+	function initShadowHook() {
+		const original = _unsafeWindow.Element.prototype.attachShadow;
+		_unsafeWindow.Element.prototype.attachShadow = function(init) {
+			const root = original.call(this, init);
+			createdRoots.push([root, this]);
+			dispatch(root, this);
+			return root;
+		};
+	}
+	function onShadowRoot(hostTag, handler) {
+		handlers.push({
+			hostTag,
+			handler
+		});
+		for (const [root, host] of createdRoots) if (host.tagName.toLowerCase() === hostTag) runHandler(handler, root, host);
+	}
+	function injectStyleIntoShadows(cssText, hostTag) {
+		onShadowRoot(hostTag, (root) => {
+			root.appendChild(Object.assign(document.createElement("style"), { textContent: cssText }));
+		});
+	}
+	function dispatch(root, host) {
+		for (const { hostTag, handler } of handlers) if (host.tagName.toLowerCase() === hostTag) runHandler(handler, root, host);
+	}
+	function runHandler(handler, root, host) {
+		try {
+			handler(root, host);
+		} catch {}
+	}
+	var initialized = false;
+	function handleCommentShadow() {
+		if (initialized) return;
+		initialized = true;
+		injectStyleIntoShadows(`
+div#contents {
+  padding-top: 0;
+}`, "bili-comments");
+		injectStyleIntoShadows(`
+div#commentbox {
+  position: fixed;
+  left: 0;
+  bottom: var(--actionbar-height);
+  z-index: 10;
+  width: calc(100% - (100% - 200px) / 3);
+  padding: 7px calc((100% - 200px) / 6);
+  transition: calc(var(--actionbar-time)*1.40) ease-in;
+  display: var(--commentbox-display);
+  transform: var(--shadow-transform);
+  backdrop-filter: blur(3px);
+  background-color: rgba(255, 255, 255, .6);
+}
+div#commentbox[style] {
+  display: none;
+}
+div#commentbox[style]+.bili-comments-bottom-fixed-wrapper {
+  width: 100% !important;
+  bottom: var(--actionbar-height) !important;
+}
+div#commentbox[style]+.bili-comments-bottom-fixed-wrapper>div {
+  padding: 8px 12px !important;
+  width: calc(100% - 24px) !important;
+  transition: calc(var(--actionbar-time)* 1.40) ease-in;
+  display: var(--commentbox-display);
+  transform: var(--shadow-transform);
+  backdrop-filter: blur(3px);
+  background-color: rgba(255, 255, 255, .6) !important;
+  border: none !important;
+}
+div#navbar {
+  margin-bottom: 0;
+}
+#notice {
+  display: none;
+}`, "bili-comments-header-renderer");
+		injectStyleIntoShadows(`
+:host {
+  display: var(--commentbox-display) !important;
+}
+div#user-avatar {
+  display: none;
+}
+div#comment-area {
+  width: 100%;
+}
+div#editor {
+  border-radius: 13px;
+  padding: 0;
+  border: none;
+}`, "bili-comment-box");
+		injectStyleIntoShadows(`
+.option.left,
+.option.right {
+  min-width: 0 !important;
+}
+#card {
+  padding-top: 27px !important;
+}
+#info {
+  transform: translateY(-23px);
+}
+#title {
+  overflow: visible !important;
+  white-space: nowrap;
+  position: absolute;
+}
+#desc {
+  padding-top: 20px;
+}`, "bili-comments-vote-card");
+		injectStyleIntoShadows(`
+textarea#input {
+  line-height: 26px;
+  min-height: 26px;
+  height: 26px !important;
+}`, "bili-comment-textarea");
+		injectStyleIntoShadows(`
+div#input, div.brt-root {
+  line-height: 26px;
+  min-height: 26px;
+  --brt-line-height: 26px;
+}`, "bili-comment-rich-textarea");
+		injectStyleIntoShadows(`
+div#body {
+  padding: 4px 0 0 44px;
+  --bili-comment-hover-more-display: block;
+}
+a#user-avatar {
+  left: 0;
+  top: 12px;
+}`, "bili-comment-renderer");
+		injectStyleIntoShadows(`
+div#expander {
+  padding-left: 40px;
+}`, "bili-comment-replies-renderer");
+		injectStyleIntoShadows(`
+div#body {
+  padding: 4px 0 4px 29px;
+  --bili-comment-hover-more-display: block;
+}`, "bili-comment-reply-renderer");
+		onShadowRoot("bili-avatar", (root, host) => {
+			setTimeout(() => {
+				if (host.closest("bili-comment-renderer")) root.appendChild(Object.assign(document.createElement("style"), { textContent: `
+.layer.center {
+  width: 48px !important;
+  height: 48px !important;
+}` }));
+			});
+		});
+		setupPhotoSwipe();
+		setupCommentsPopup();
+	}
+	function setupPhotoSwipe() {
+		injectStyleIntoShadows(`
+#container {z-index:3;}
+#thumb {z-index: 4;}
+#prev, #next, #close {visibility: hidden;}
+#item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#zoom-wrap {
+  position: unset !important;
+  transform: none !important;
+}`, "bili-photoswipe");
+		onShadowRoot("bili-photoswipe", (root) => {
+			const wire = () => {
+				const zoomWrap = root.querySelector("#zoom-wrap");
+				if (!zoomWrap) return false;
+				zoomWrap.addEventListener("click", (event) => {
+					event.stopImmediatePropagation();
+					root.querySelector("#close")?.click();
+				}, {
+					capture: true,
+					once: true
+				});
+				touchZoomWrap(zoomWrap, root);
+				return true;
+			};
+			if (!wire()) {
+				const observer = new MutationObserver(() => {
+					if (wire()) observer.disconnect();
+				});
+				observer.observe(root, {
+					childList: true,
+					subtree: true
+				});
+			}
+		});
+	}
+	function setupCommentsPopup() {
+		onShadowRoot("bili-comments-popup", (root, host) => {
+			host.addEventListener("click", () => {
+				root.querySelector("#close")?.click();
+			}, { once: true });
+			const wireIframe = () => {
+				const iframe = host.querySelector("iframe");
+				if (!iframe) return false;
+				iframe.addEventListener("load", () => {
+					const contentDocument = iframe.contentDocument;
+					const style = contentDocument.createElement("style");
+					style.textContent = `
+div.bili-dyn-item-draw {
+  min-width: 0;
+  padding-left: 58px;
+}
+div.bili-dyn-item-draw__avatar {
+  width: 58px;
+  height: 58px;
+}
+.bili-album__preview__picture {
+  max-width: 100%;
+  height: auto !important;
+}
+.bili-album__preview[class*=grid] {
+  max-width: 100%;
+}
+.bili-album__preview[class*=grid] .bili-album__preview__picture {
+    margin-bottom: 4px;
+}
+          `;
+					contentDocument.head.appendChild(style);
+				});
+				return true;
+			};
+			if (!wireIframe()) {
+				const observer = new MutationObserver(() => {
+					if (wireIframe()) observer.disconnect();
+				});
+				observer.observe(host, {
+					childList: true,
+					subtree: true
+				});
+			}
+		});
+	}
 	function videoInteraction() {
 		const features = [
 			handlePortrait,
@@ -2510,7 +2404,7 @@ div.bili-dyn-item-draw__avatar {
 			foldDescTag,
 			closeMiniPlayer,
 			setEndingContent,
-			modifyShadowDOMLate
+			handleCommentShadow
 		];
 		for (const feature of features) try {
 			feature();
@@ -2789,6 +2683,7 @@ div.bili-dyn-item-draw__avatar {
 		}, true);
 	}
 	(function() {
+		initShadowHook();
 		if (window.top !== window.self) return;
 		document.head.appendChild(Object.assign(document.createElement("meta"), {
 			name: "viewport",
