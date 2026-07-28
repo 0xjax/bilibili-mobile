@@ -20,7 +20,6 @@ export default defineConfig({
                     "https://message.bilibili.com/pages/nav/*",
                     "https://www.bilibili.com/blackboard/comment-detail.html?*",
                 ],
-                grant: ["GM_registerMenuCommand", "GM_getValue", "GM_setValue"],
                 require: ["https://unpkg.com/js-md5@latest/src/md5.js"],
             },
             build: {
