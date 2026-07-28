@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "oxlint": "^1.76.0",
+    "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vite-plugin-monkey": "^8.1.0"
   },
@@ -8,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit"
   }
 }

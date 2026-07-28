@@ -6,7 +6,8 @@
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
+		"types": ["vite/client"],
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
@@ -15,6 +16,6 @@
 		"allowJs": true,
 		"allowImportingTsExtensions": true
 	},
-	"include": ["src/**/*", "types**/*"],
+	"include": ["src/**/*", "types/**/*"],
 	"exclude": ["node_modules"]
 }
