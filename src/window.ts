@@ -42,6 +42,8 @@ export function increaseVideoLoadSize() {
  * 网页计时提醒
  */
 export function countViewTime() {
+  if (!GM_getValue('view-time-toast', true)) return
+
   window.onload = function () {
     let storedTime = GM_getValue('view-time', 0) as number
     const storedTimestamp = GM_getValue('timestamp', Date.now()) as number

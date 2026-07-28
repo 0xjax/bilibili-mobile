@@ -243,10 +243,14 @@ export function handleScriptSetting() {
     'home-single-column': '首页单列推荐',
     'menu-dialog-move-down': '菜单弹窗(收藏、历史等)靠下',
     'touch-gesture': '触摸手势功能(全屏按钮、滑动关闭搜索)',
+    'view-time-toast': '浏览时长提醒',
   } as { [key: string]: string }
 
   // 默认开启的设置项
-  const keyDefaults = { 'touch-gesture': true } as { [key: string]: boolean }
+  const keyDefaults = {
+    'touch-gesture': true,
+    'view-time-toast': true,
+  } as { [key: string]: boolean }
 
   const customKeyValues = {
     'menu-dialog-move-down-value': '20',
@@ -574,6 +578,8 @@ export function setScriptHelp() {
         <div class="setting-title">脚本说明</div>
         <div class="setting-content">
           <li>视频页：双击全屏按钮竖屏播放，左右滑动切换侧边栏</li>
+          <li>视频页：长按屏幕倍速播放（倍速可在设置中自定义）</li>
+          <li>首页：视频卡的更多选项弹窗提供 AI 总结与视频预览</li>
           <li>搜索页：双击搜索按钮清空输入框，左右滑动切换分类</li>
           <li>个人空间：双击搜索按钮全局搜索，左右滑动切换分类</li>
           <li>作者持续改进和处理反馈，<a href="https://github.com/jk278/bilibili-mobile" target="_blank">Github 仓库</a>、<a href="https://t.me/dream_x_forest" target="_blank">电报吹水群</a></li>

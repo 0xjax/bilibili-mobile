@@ -9,7 +9,7 @@
 // @match        https://*.bilibili.com/*
 // @exclude      https://message.bilibili.com/pages/nav/*
 // @exclude      https://www.bilibili.com/blackboard/comment-detail.html?*
-// @require      https://unpkg.com/js-md5@latest/src/md5.js
+// @require      https://unpkg.com/js-md5@0.9.2/src/md5.js
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
@@ -85,6 +85,7 @@
 		};
 	}
 	function countViewTime() {
+		if (!_GM_getValue("view-time-toast", true)) return;
 		window.onload = function() {
 			let storedTime = _GM_getValue("view-time", 0);
 			const storedTimestamp = _GM_getValue("timestamp", Date.now());
@@ -428,9 +429,13 @@ div.bili-live-card__info {
 			"cover-context-menu": "覆盖消息页长按弹窗",
 			"home-single-column": "首页单列推荐",
 			"menu-dialog-move-down": "菜单弹窗(收藏、历史等)靠下",
-			"touch-gesture": "触摸手势功能(全屏按钮、滑动关闭搜索)"
+			"touch-gesture": "触摸手势功能(全屏按钮、滑动关闭搜索)",
+			"view-time-toast": "浏览时长提醒"
 		};
-		const keyDefaults = { "touch-gesture": true };
+		const keyDefaults = {
+			"touch-gesture": true,
+			"view-time-toast": true
+		};
 		const customKeyValues = {
 			"menu-dialog-move-down-value": "20",
 			"video-longpress-speed": "2",
@@ -659,6 +664,8 @@ div.bili-live-card__info {
         <div class="setting-title">脚本说明</div>
         <div class="setting-content">
           <li>视频页：双击全屏按钮竖屏播放，左右滑动切换侧边栏</li>
+          <li>视频页：长按屏幕倍速播放（倍速可在设置中自定义）</li>
+          <li>首页：视频卡的更多选项弹窗提供 AI 总结与视频预览</li>
           <li>搜索页：双击搜索按钮清空输入框，左右滑动切换分类</li>
           <li>个人空间：双击搜索按钮全局搜索，左右滑动切换分类</li>
           <li>作者持续改进和处理反馈，<a href="https://github.com/jk278/bilibili-mobile" target="_blank">Github 仓库</a>、<a href="https://t.me/dream_x_forest" target="_blank">电报吹水群</a></li>
