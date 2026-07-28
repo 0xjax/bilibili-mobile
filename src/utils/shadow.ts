@@ -8,17 +8,23 @@ const handlers: { hostTag: string; handler: ShadowHandler }[] = []
 /**
  * 拦截页面域的 attachShadow，在 shadow root 创建瞬间分发。
  * 必须在 document-start、页面脚本执行前调用。
+ * 部分脚本管理器不提供 unsafeWindow（此时脚本运行在页面上下文，window 即页面 window）。
  */
 export function initShadowHook() {
-  const original = unsafeWindow.Element.prototype.attachShadow
-  unsafeWindow.Element.prototype.attachShadow = function (
-    this: Element,
-    init: ShadowRootInit,
-  ): ShadowRoot {
-    const root = original.call(this, init)
-    createdRoots.push([root, this])
-    dispatch(root, this)
-    return root
+  const pageWindow = (unsafeWindow ?? window) as typeof window
+  try {
+    const original = pageWindow.Element.prototype.attachShadow
+    pageWindow.Element.prototype.attachShadow = function (
+      this: Element,
+      init: ShadowRootInit,
+    ): ShadowRoot {
+      const root = original.call(this, init)
+      createdRoots.push([root, this])
+      dispatch(root, this)
+      return root
+    }
+  } catch {
+    // 钩子安装失败时静默降级，不影响脚本其余功能
   }
 }
 

@@ -2553,13 +2553,16 @@ div.bili-live-card__info {
 	var createdRoots = [];
 	var handlers = [];
 	function initShadowHook() {
-		const original = _unsafeWindow.Element.prototype.attachShadow;
-		_unsafeWindow.Element.prototype.attachShadow = function(init) {
-			const root = original.call(this, init);
-			createdRoots.push([root, this]);
-			dispatch(root, this);
-			return root;
-		};
+		const pageWindow = _unsafeWindow ?? window;
+		try {
+			const original = pageWindow.Element.prototype.attachShadow;
+			pageWindow.Element.prototype.attachShadow = function(init) {
+				const root = original.call(this, init);
+				createdRoots.push([root, this]);
+				dispatch(root, this);
+				return root;
+			};
+		} catch {}
 	}
 	function onShadowRoot(hostTag, handler) {
 		handlers.push({
