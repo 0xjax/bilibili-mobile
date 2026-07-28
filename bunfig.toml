@@ -1,0 +1,5 @@
+[install]
+# This mitigates supply-chain attacks where a compromised package is published
+# and immediately consumed before the vulnerability is discovered.
+# Dependencies must be published for at least 7 days before they can be installed.
+minimumReleaseAge = 259200
