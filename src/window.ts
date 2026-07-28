@@ -206,7 +206,8 @@ function slideSearchSort() {
   let clickIndex = 3
   const navItems = [4, 3, 2, 1, 7, 6, 5]
 
-  const container = document.querySelector('#i_cecream') as HTMLElement
+  const container = document.querySelector('#app') as HTMLElement | null
+  if (!container) return
 
   function clickSortTab() {
     ; (
@@ -276,25 +277,18 @@ function slideMessageSidebar() {
 
 // 处理space滚动和滑动事件
 function handleSpaceSwipe() {
-  const observer = new MutationObserver((mutationsList) => {
-    mutationsList.forEach((mutation) => {
-      mutation.addedNodes.forEach((addedNode) => {
-        if (
-          addedNode.nodeType === Node.ELEMENT_NODE &&
-          (addedNode as HTMLElement).id === 'app'
-        ) {
-          slideSpaceNavigator()
-          observer.disconnect()
-        }
-      })
-    })
+  const observer = new MutationObserver(() => {
+    if (document.querySelector('.nav-tab a.nav-tab__item')) {
+      slideSpaceNavigator()
+      observer.disconnect()
+    }
   })
-  observer.observe(document.body, { childList: true })
+  observer.observe(document.body, { childList: true, subtree: true })
 
   function slideSpaceNavigator() {
-    const current = document.querySelector('#navigator .active')
+    const current = document.querySelector('.nav-tab a.active')
     const siblings = Array.from(
-      document.querySelectorAll('#navigator .n-btn'),
+      document.querySelectorAll('.nav-tab a.nav-tab__item'),
     ).sort((a, b) => {
       return (
         parseInt(getComputedStyle(a).order) -
@@ -302,6 +296,7 @@ function handleSpaceSwipe() {
       )
     }) as HTMLElement[]
     let index = siblings.findIndex((el) => el === current)
+    if (siblings.length === 0 || index === -1) return
 
     const container = document.querySelector('#app') as HTMLElement
 

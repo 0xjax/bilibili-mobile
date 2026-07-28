@@ -187,7 +187,8 @@
 			6,
 			5
 		];
-		const container = document.querySelector("#i_cecream");
+		const container = document.querySelector("#app");
+		if (!container) return;
 		function clickSortTab() {
 			document.querySelector(`.vui_tabs--nav-item:nth-child(${navItems[clickIndex]})`).click();
 		}
@@ -231,23 +232,23 @@
 		setupSlide(sidebarOverlay, 55, slideLeft, slideRight);
 	}
 	function handleSpaceSwipe() {
-		const observer = new MutationObserver((mutationsList) => {
-			mutationsList.forEach((mutation) => {
-				mutation.addedNodes.forEach((addedNode) => {
-					if (addedNode.nodeType === Node.ELEMENT_NODE && addedNode.id === "app") {
-						slideSpaceNavigator();
-						observer.disconnect();
-					}
-				});
-			});
+		const observer = new MutationObserver(() => {
+			if (document.querySelector(".nav-tab a.nav-tab__item")) {
+				slideSpaceNavigator();
+				observer.disconnect();
+			}
 		});
-		observer.observe(document.body, { childList: true });
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
 		function slideSpaceNavigator() {
-			const current = document.querySelector("#navigator .active");
-			const siblings = Array.from(document.querySelectorAll("#navigator .n-btn")).sort((a, b) => {
+			const current = document.querySelector(".nav-tab a.active");
+			const siblings = Array.from(document.querySelectorAll(".nav-tab a.nav-tab__item")).sort((a, b) => {
 				return parseInt(getComputedStyle(a).order) - parseInt(getComputedStyle(b).order);
 			});
 			let index = siblings.findIndex((el) => el === current);
+			if (siblings.length === 0 || index === -1) return;
 			setupSlide(document.querySelector("#app"), 55, () => {
 				if (index < siblings.length - 1) {
 					index++;
