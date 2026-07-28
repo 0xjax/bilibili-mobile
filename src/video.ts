@@ -101,10 +101,10 @@ function handlelVideoClick() {
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
+      const firstNode = mutation.addedNodes[0]
       if (
-        (mutation.addedNodes[0] as HTMLElement).classList.contains(
-          'bpx-player-ctrl-web',
-        )
+        firstNode?.nodeType === Node.ELEMENT_NODE &&
+        (firstNode as HTMLElement).classList.contains('bpx-player-ctrl-web')
       ) {
         // 还可以让控制栏显示作为网页全屏按钮加载的标志事件
         if (video.paused) {
@@ -211,8 +211,6 @@ function handlelVideoClick() {
   if (GM_getValue('video-click-unmute', false)) {
     // 不响应 videoArea 避免交互冲突
     window.addEventListener('click', (event) => {
-      console.log(event.target)
-
       if (!videoArea.contains(event.target as HTMLElement)) {
         unmute()
       }

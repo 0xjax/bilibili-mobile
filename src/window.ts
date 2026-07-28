@@ -127,8 +127,10 @@ function scrollToHidden(type: string) {
     list: '.playlist-container--left',
   }
 
+  const isSidePage = ['video', 'list'].includes(type)
+
   let elem: HTMLElement | undefined
-  if (['video', 'list'].includes(type)) {
+  if (isSidePage) {
     const container = document.querySelector(
       videoMap[type as keyof typeof videoMap],
     ) as HTMLElement | null
@@ -152,16 +154,16 @@ function scrollToHidden(type: string) {
       lastScrollY = currentScrollY
     }
 
-    if (['video', 'list'].includes(type)) {
+    if (isSidePage) {
       if (currentScrollY > window.innerHeight / 2) {
         backup?.setAttribute('show', '')
       } else {
         backup?.removeAttribute('show')
       }
     }
-  })
+  }, { passive: true })
 
-  if (['video', 'list'].includes(type) && backup) {
+  if (isSidePage && backup) {
     backup.addEventListener('click', () => {
       elem?.scrollTo({ top: 0, behavior: 'smooth' })
       backup.setAttribute('touch-active', '')

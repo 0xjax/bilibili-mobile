@@ -390,8 +390,11 @@ div#navbar {
     return
   }
 
-  // 评论区图片
-  new MutationObserver(handleBodyMutation).observe(document.body, {
+  // 评论区图片、详情、笔记（合并为单个 body 观察器，减少回调触发）
+  new MutationObserver((mutations) => {
+    handleBodyMutation(mutations)
+    handleBodyMutation2(mutations)
+  }).observe(document.body, {
     childList: true,
   })
 
@@ -441,10 +444,6 @@ div#navbar {
   }
 
   // 评论区详情、笔记
-  new MutationObserver(handleBodyMutation2).observe(document.body, {
-    childList: true,
-  })
-
   function handleBodyMutation2(mutations: MutationRecord[]): void {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {

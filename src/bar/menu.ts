@@ -33,7 +33,7 @@ export function setMenuBtn() {
   }
 
   tryPreload()
-  function tryPreload() {
+  function tryPreload(retry = 20) {
     if (
       document.querySelector(preloadeditems1[0]) && // 排除登录、主页
       document.querySelector(preloadeditems1[1]) &&
@@ -42,7 +42,7 @@ export function setMenuBtn() {
       isOldApp = true
       preload()
       changeMenu()
-      function changeMenu() {
+      function changeMenu(retry = 40) {
         if (document.querySelector('#header-in-menu')) {
           ;(
             document.querySelector(
@@ -66,8 +66,8 @@ export function setMenuBtn() {
             ) as HTMLElement
           ).dataset.refer =
             ".right-entry__outside[href='//www.bilibili.com/history']"
-        } else {
-          setTimeout(changeMenu, 50)
+        } else if (retry > 0) {
+          setTimeout(() => changeMenu(retry - 1), 50)
         }
       }
     } else if (
@@ -78,8 +78,8 @@ export function setMenuBtn() {
     ) {
       isOldApp = false
       preload()
-    } else {
-      setTimeout(tryPreload, 1000)
+    } else if (retry > 0) {
+      setTimeout(() => tryPreload(retry - 1), 1000)
     }
   }
 

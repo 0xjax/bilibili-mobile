@@ -145,8 +145,9 @@
 			video: ".left-container",
 			list: ".playlist-container--left"
 		};
+		const isSidePage = ["video", "list"].includes(type);
 		let elem;
-		if (["video", "list"].includes(type)) {
+		if (isSidePage) {
 			const container = document.querySelector(videoMap[type]);
 			if (container) elem = container;
 		}
@@ -159,10 +160,10 @@
 				else document.body.removeAttribute("scroll-hidden");
 				lastScrollY = currentScrollY;
 			}
-			if (["video", "list"].includes(type)) if (currentScrollY > window.innerHeight / 2) backup?.setAttribute("show", "");
+			if (isSidePage) if (currentScrollY > window.innerHeight / 2) backup?.setAttribute("show", "");
 			else backup?.removeAttribute("show");
-		});
-		if (["video", "list"].includes(type) && backup) backup.addEventListener("click", () => {
+		}, { passive: true });
+		if (isSidePage && backup) backup.addEventListener("click", () => {
 			elem?.scrollTo({
 				top: 0,
 				behavior: "smooth"
@@ -1355,23 +1356,23 @@ div.bili-live-card__info {
 			setTimeout(handleDynamicShowMore, 60);
 		}
 		tryPreload();
-		function tryPreload() {
+		function tryPreload(retry = 20) {
 			if (document.querySelector(preloadeditems1[0]) && document.querySelector(preloadeditems1[1]) && document.querySelector(preloadeditems1[2])) {
 				isOldApp = true;
 				preload();
 				changeMenu();
-				function changeMenu() {
+				function changeMenu(retry = 40) {
 					if (document.querySelector("#header-in-menu")) {
 						document.querySelector("[data-refer=\"[data-idx=message]\"]").dataset.refer = ".right-entry__outside[href='//message.bilibili.com']";
 						document.querySelector("[data-refer=\"[data-idx=dynamic]\"]").dataset.refer = ".right-entry__outside[href='//t.bilibili.com/']";
 						document.querySelector("[data-refer=\"[data-idx=fav]\"]").dataset.refer = ".right-entry__outside[data-header-fav-entry]";
 						document.querySelector("[data-refer=\"[data-idx=history]\"]").dataset.refer = ".right-entry__outside[href='//www.bilibili.com/history']";
-					} else setTimeout(changeMenu, 50);
+					} else if (retry > 0) setTimeout(() => changeMenu(retry - 1), 50);
 				}
 			} else if (document.querySelector(preloadeditems2[0]) && document.querySelector(preloadeditems2[1]) && document.querySelector(preloadeditems2[2]) && document.querySelector(preloadeditems2[3])) {
 				isOldApp = false;
 				preload();
-			} else setTimeout(tryPreload, 1e3);
+			} else if (retry > 0) setTimeout(() => tryPreload(retry - 1), 1e3);
 		}
 		const menuFab = document.getElementById("menu-fab");
 		const menuOverlay = Object.assign(document.createElement("div"), {
@@ -1902,7 +1903,10 @@ div#navbar {
 			shadowRoot.appendChild(style);
 		}
 		if (isDynamicRefresh) return;
-		new MutationObserver(handleBodyMutation).observe(document.body, { childList: true });
+		new MutationObserver((mutations) => {
+			handleBodyMutation(mutations);
+			handleBodyMutation2(mutations);
+		}).observe(document.body, { childList: true });
 		function handleBodyMutation(mutations) {
 			mutations.forEach((mutation) => {
 				mutation.addedNodes.forEach((node) => {
@@ -1935,7 +1939,6 @@ div#navbar {
 				});
 			});
 		}
-		new MutationObserver(handleBodyMutation2).observe(document.body, { childList: true });
 		function handleBodyMutation2(mutations) {
 			mutations.forEach((mutation) => {
 				mutation.addedNodes.forEach((node) => {
@@ -2540,7 +2543,8 @@ div.bili-dyn-item-draw__avatar {
 		playerContainter.setAttribute("ctrl-shown", "false");
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
-				if (mutation.addedNodes[0].classList.contains("bpx-player-ctrl-web")) {
+				const firstNode = mutation.addedNodes[0];
+				if (firstNode?.nodeType === Node.ELEMENT_NODE && firstNode.classList.contains("bpx-player-ctrl-web")) {
 					if (video.paused) showControlWrap();
 					const subtitleBtn = document.querySelector(".bpx-player-ctrl-subtitle");
 					if (subtitleBtn) window.addEventListener("click", (event) => {
@@ -2603,7 +2607,6 @@ div.bili-dyn-item-draw__avatar {
 			event.stopPropagation();
 		});
 		if (_GM_getValue("video-click-unmute", false)) window.addEventListener("click", (event) => {
-			console.log(event.target);
 			if (!videoArea.contains(event.target)) unmute();
 		});
 	}
@@ -2735,7 +2738,8 @@ div.bili-dyn-item-draw__avatar {
 	}
 	function createUnfoldBtn() {
 		const observer = new MutationObserver((mutations) => mutations.forEach((mutation) => {
-			if (mutation.addedNodes[0]?.classList.contains("bili-im")) {
+			const addedNode = mutation.addedNodes[0];
+			if (addedNode?.nodeType === Node.ELEMENT_NODE && addedNode.classList.contains("bili-im")) {
 				createElement();
 				observer.disconnect();
 			}

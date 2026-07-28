@@ -4,9 +4,10 @@ export function createUnfoldBtn() {
   const observer = new MutationObserver((mutations) =>
     mutations.forEach((mutation) => {
       // innerHTML 属性可一次性插入多个节点。此处 mutation.addedNodes.length 为 0 或 1。非数组使用 for...of 循环。
-      // addedNode.nodeType 为 1 表示 Node.ELEMENT_NODE
+      const addedNode = mutation.addedNodes[0]
       if (
-        (mutation.addedNodes[0] as HTMLElement)?.classList.contains('bili-im')
+        addedNode?.nodeType === Node.ELEMENT_NODE &&
+        (addedNode as HTMLElement).classList.contains('bili-im')
       ) {
         createElement()
         observer.disconnect()
