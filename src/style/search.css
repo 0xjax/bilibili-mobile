@@ -423,3 +423,7 @@ div.live-content {
 .search-logo.p_center_y {
     display: none;
 }
+/* 页脚在样式适配下会异常显示在页面中间，移动端无用直接隐藏 */
+#biliMainFooter {
+    display: none;
+}
