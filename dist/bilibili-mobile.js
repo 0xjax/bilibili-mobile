@@ -10,9 +10,6 @@
 // @exclude      https://message.bilibili.com/pages/nav/*
 // @exclude      https://www.bilibili.com/blackboard/comment-detail.html?*
 // @grant        GM_addStyle
-// @grant        GM_getValue
-// @grant        GM_registerMenuCommand
-// @grant        GM_setValue
 // @grant        unsafeWindow
 // @run-at       document-start
 // ==/UserScript==
@@ -37,10 +34,37 @@
 	_css("body{--shadow-transform:none;--commentbox-display:block}body[scroll-hidden]{--shadow-transform:translateY(calc(100% + var(--actionbar-height)))}#app{--sidebar-time:.6s;min-width:auto!important}#app #mirror-vdcon{min-width:0;margin-top:56.25vw;padding:0}#app,#mirror-vdcon{height:100%}.left-container,.playlist-container--left{--video-min-height:calc(100vw * .5625);--dm-row-height:40px;box-sizing:border-box;padding:calc(var(--dm-row-height) + 5px) 10px 10px;background:#fff;width:100%!important}.left-container:after,.playlist-container--left:after{content:\"\";pointer-events:none;opacity:0;width:100%;height:100%;transition:opacity var(--sidebar-time) ease-in;background-color:#0000004d;position:fixed;top:0;left:0}.playlist-container--left{z-index:1}#mirror-vdcon[sidebar] .left-container:after,#mirror-vdcon[sidebar] .playlist-container--left:after{pointer-events:auto;opacity:1}.right-container,.playlist-container--right{z-index:1;transition:transform var(--sidebar-time) ease-in;overscroll-behavior:contain;box-sizing:border-box;background:#fff;height:calc(100% - 56.25vw);left:100%;overflow-y:auto;width:100%!important;padding:10px 10px calc(var(--actionbar-height) + 10px)!important;margin:0!important;position:fixed!important}#mirror-vdcon[sidebar] .right-container,#mirror-vdcon[sidebar] .playlist-container--right{transform:translate(-100%)}.right-container-inner{padding:0!important}.upinfo-btn-panel .default-btn{font-size:12px!important}.new-charge-btn{max-width:35%}.follow-btn{max-width:150px!important}div.multi-page-v1 .cur-list{overflow-y:auto}.cur-list ul.list-box li{width:100%!important}.cur-list ul.module-box.clearfix{margin:5px 10px}.cur-list ul.module-box li{width:23%!important;margin:2% 1%!important}#reco_list .card-box .pic-box{max-width:50%}.rec-footer{display:none}.base-video-sections-v1 a.first-line-title{line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:wrap!important;display:-webkit-box!important}#activity_vote,#bannerAd,.reply-notice,.activity-m-v1,.ad-report,.pop-live-small-mode,#slide_ad,.video-page-game-card-small{display:none!important}#playerWrap{z-index:61;position:fixed;top:0;left:0;height:56.25vw!important}#bilibili-player{width:100vw!important;height:56.25vw!important}#bilibili-player.mode-webscreen{width:100%!important;height:100%!important}.bpx-player-container,#bilibili-player-placeholder{box-shadow:none!important}#app .bpx-player-video-perch{max-height:0}.bpx-player-top-wrap,.bpx-player-state-wrap{display:none!important}.bpx-player-toast-wrap{display:block!important;bottom:65px!important}.bpx-player-ending-wrap[hidden]{display:block!important}div.bpx-player-container[data-screen=web] .bpx-player-ending-content{width:536px;margin-left:-268px}.bpx-player-ending-functions-follow{width:auto!important;padding:0 15px!important}.bpx-player-ending-functions-btn[data-action=restart]{padding-right:15px!important}.bpx-player-ending-functions-pagecallback{margin-left:5px!important}.bpx-player-ending-functions-pagecallback .bpx-player-ending-functions-btn{margin-left:10px!important}@media screen and (orientation:landscape){.bpx-player-ending-functions-btn[data-action=restart]{padding-right:42px!important}.bpx-player-ending-functions-pagecallback{margin-left:14px!important}.bpx-player-ending-functions-pagecallback .bpx-player-ending-functions-btn{margin-left:28px!important}}.bpx-player-ending-related-item-countdown{width:48px!important;margin-top:34px!important}.bpx-player-ending-functions-upinfo{height:56px!important;margin-top:0!important}.bui-swiper~.bpx-player-ending-related{height:109px!important}.bpx-player-sending-area{z-index:0;width:100%;transition:transform .5s ease-in;bottom:0;transform:translateY(100%);display:block!important;position:absolute!important}[scroll-hidden] .bpx-player-sending-area{transform:none}.bpx-player-video-area{z-index:1}.bpx-player-container[data-screen=mini]{overflow:unset!important}.bpx-player-sending-bar-left,.bpx-player-sending-bar-right,#bilibili-player-placeholder-bottom{display:none!important}div.bpx-player-sending-bar{height:var(--dm-row-height)}.bpx-player-sending-area .bpx-player-sending-bar{-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);background-color:#fff9!important}.bpx-player-dm-input{height:26px!important}.bpx-player-video-inputbar{border-radius:13px!important;min-width:0!important;height:26px!important}.bpx-player-video-inputbar-wrap{width:100%!important}.bpx-player-dm-btn-send{display:none!important}.bpx-player-video-inputbar-wrap:has(>input:focus)+.bpx-player-dm-btn-send{display:flex!important}.bpx-player-dm-btn-send{border-radius:0 13px 13px 0!important;width:50px!important;min-width:50px!important;height:26px!important}.bui-button-blue{min-width:50px!important}.bpx-player-video-info{margin-right:6px!important}.bpx-player-video-info-divide,.bpx-player-video-info-dm,.bpx-player-dm-hint{display:none!important}.video-info-container{height:auto!important;padding-top:0!important}.video-title,.video-title-href{line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:wrap!important;margin-right:0!important;font-size:18px!important;display:-webkit-box!important}.show-more{bottom:4px;top:unset!important;right:4px!important;transform:none!important}.video-desc-container{margin:10px 0!important}.video-info-detail-list .item{margin-right:4px!important}.pubdate-ip{display:inline-flex!important}.video-info-detail-list:has(.honor.item){margin-top:24px}.video-info-detail-list:has(.video-argue.item){margin-bottom:20px}div:not(.overflow-panel)>div>.honor.item{position:absolute;top:0;align-self:start!important}.video-argue.item{position:absolute;bottom:0;align-self:start!important;display:block!important}.overflow-panel .video-argue.item{max-width:calc(100% - 32px)}.video-toolbar-container{padding:10px 0 8px!important}.video-toolbar-left,.video-toolbar-left-main{min-width:0}.toolbar-left-item-wrap{flex:1;min-width:0}.video-toolbar-container *{margin:0!important}.toolbar-left-item-wrap span{padding-left:2px}.video-share-info{width:40px!important}.video-share-popover,.video-ai-assistant-badge{display:none!important}.video-toolbar-right div.video-ai-assistant.disabled:after{left:180%;transform:translate(-100%)}div.resizable-component.resizable-component{max-height:100vw;transform:translateY(-50%);border-radius:12px!important;width:100%!important;height:fit-content!important;top:50%!important;left:0!important}div.ai-summary-popup{max-height:inherit;border-radius:12px}#v_desc .toggle-btn{text-align:right;margin-right:7px}.basic-desc-info[style=\"height: 84px;\"]{height:70px!important}.video-tag-container{margin:6px 0 0!important;padding-bottom:1px!important}.tag-panel .tag{margin-bottom:6px!important}#commentapp{padding-top:10px}.bili-user-profile,body>.usercard-wrap{display:none!important}.back-to-top{transform:translate(-100%);border-left:0!important;border-color:var(--line_regular)!important;visibility:visible!important;border-radius:0 25% 25% 0!important;width:42px!important;margin-bottom:0!important;transition:transform .5s ease-in-out,background-color .3s!important}.back-to-top[show]{transform:none}#app .fixed-sidenav-storage .fixed-sidenav-storage-item:hover{background-color:var(--bg1_float);color:var(--text1);fill:var(--text1)}div#app .fixed-sidenav-storage .fixed-sidenav-storage-item[touch-active]{background:var(--graph_bg_thick)}.fixed-sidenav-storage{opacity:1;transition:opacity var(--sidebar-time) ease-in;left:0;right:unset!important;z-index:1!important;bottom:90px!important}#mirror-vdcon[sidebar] .fixed-sidenav-storage{opacity:0}.mini-player-window{z-index:-10;visibility:hidden;position:fixed}.customer-service{display:none!important}");
 	_css(".bpx-player-ctrl-pip,.bpx-player-ctrl-wide,.bpx-player-ctrl-time,.bpx-player-ctrl-eplist{display:none!important}@media screen and (orientation:landscape){.bpx-player-ctrl-time{display:block!important}}@media screen and (width>=750px){.bpx-player-container[data-screen=full] .bpx-player-ctrl-quality-result{height:unset!important;font-size:16px!important}.bpx-player-container[data-screen=full] .bpx-player-control-wrap{height:43px!important}.bpx-player-container[data-screen=full] .bpx-player-control-top{bottom:43px!important}}div.bpx-player-control-bottom{height:29px!important;margin-top:7px!important;padding:0 7px!important}div.bpx-player-control-top{transition:none;bottom:36px}.bpx-player-pbp .bpx-player-pbp-pin-tip{display:none!important}.bpx-player-control-bottom-left,.bpx-player-control-bottom-right{flex:unset!important}.bpx-player-container .bpx-player-control-bottom-left,.bpx-player-container .bpx-player-control-bottom-right{min-width:0!important}.bpx-player-ctrl-quality{min-width:0;flex:auto!important;margin-right:0!important}.bpx-player-ctrl-quality-result,.bpx-player-ctrl-playbackrate{font-size:12px!important}.bpx-player-ctrl-quality-result{height:22px;overflow:hidden}.bpx-player-ctrl-playbackrate{text-wrap:nowrap}.bpx-player-progress-wrap{height:7px!important;padding-bottom:3px!important}.bpx-player-control-mask{background:linear-gradient(#0000 0%,#00000080 100%)!important}.bpx-player-ctrl-quality-menu-wrap{bottom:22px!important}.bpx-player-ctrl-quality-menu-item{max-width:95px;max-height:36px;height:7.7vw!important;padding:0 8px 0 12px!important}.bpx-player-ctrl-quality-badge-bigvip{color:#fff;background-color:#f25d8e;width:16px;overflow:hidden;right:8px!important}.bpx-player-ctrl-quality-badge-bigvip:before{color:#fff;content:\"V\";background-color:#f25d8e;padding:0 4px;position:absolute;left:0}.bpx-player-ctrl-playbackrate-menu{bottom:22px!important}.bpx-player-ctrl-playbackrate-menu-item{justify-content:center;align-items:center;max-height:36px;display:flex;height:7.7vw!important}div.bpx-player-ctrl-subtitle-box{bottom:0;right:0;transform:scale(.8)}.bpx-player-ctrl-setting-box{bottom:0!important;right:0!important}.bpx-player-ctrl-setting-menu-right{padding:5px!important}.bpx-player-ctrl-setting-menu-right>div{justify-content:center;align-items:center;max-height:40px;display:flex;height:10vw!important}.bpx-player-ctrl-setting-menu-right .bui-radio{width:77%;margin:0 0 8px 7px}.bpx-player-ctrl-setting-others-content{margin-left:7px;width:77%!important}.bpx-player-ctrl-setting-highenergy .bui-checkbox-name{white-space:nowrap;width:48px;overflow:hidden}.bpx-player-dm-setting-wrap{top:0;left:50%;transform:translate(-50%);bottom:unset!important;position:fixed!important}.bpx-player-control-bottom-center .bpx-player-sending-bar{height:24px!important;padding-right:6px!important}.bpx-player-ctrl-viewpoint{flex-shrink:1!important;width:45px!important;min-width:0!important;margin:0!important}.bpx-player-ctrl-viewpoint-text{flex:none;font-size:12px;width:24px!important;text-overflow:unset!important}.bpx-player-control-wrap:not(.new){display:none}.bpx-player-control-entity,.bpx-player-control-mask{display:block!important}.bpx-player-container[data-ctrl-hidden=true] .bpx-player-control-bottom{display:none}.bpx-player-container[ctrl-shown=false] .bpx-player-control-wrap .bpx-player-control-mask{opacity:0;transition:opacity .2s ease-in}.bpx-player-container[ctrl-shown=true] .bpx-player-control-wrap .bpx-player-control-mask{opacity:1}.bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-control-bottom{opacity:1;display:flex}.bpx-player-container[ctrl-shown=false] .bpx-player-control-entity .bpx-player-control-bottom{display:none}.bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-control-top,.bpx-player-container[ctrl-shown=false] .bpx-player-control-entity .bpx-player-shadow-progress-area{opacity:1;visibility:visible}.bpx-player-container[ctrl-shown=false] .bpx-player-control-entity .bpx-player-control-top,.bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-shadow-progress-area{opacity:0;visibility:hidden}.bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-pbp{opacity:1;width:100%;bottom:calc(100% + 6px);left:0}div.bpx-player-control-entity .bpx-player-pbp{opacity:0;width:calc(100% + 24px);bottom:1px;left:-12px}div.bpx-player-control-entity .bpx-player-pbp.pin{opacity:1}.bpx-player-pbp-pin{display:none;opacity:1!important}.bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-pbp-pin{display:block}");
 	_css(".article-detail,.article-breadcrumb,.article-up-info{max-width:100%}div.article-container{padding:10px}.title-container{padding:0!important}#article-content{max-width:100%;padding:0}figure.img-box{min-width:0!important;min-height:0!important}img.normal-img{height:auto!important}");
-	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
-	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
-	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
 	var _unsafeWindow = (() => typeof unsafeWindow != "undefined" ? unsafeWindow : void 0)();
+	function rawFn(name) {
+		const g = globalThis;
+		if (typeof g[name] === "function") return g[name];
+		const w = typeof unsafeWindow !== "undefined" ? unsafeWindow : void 0;
+		if (w && typeof w[name] === "function") return w[name];
+	}
+	function GM_getValue$1(key, defaultValue) {
+		const fn = rawFn("GM_getValue");
+		if (fn) try {
+			return fn(key, defaultValue);
+		} catch {
+			return defaultValue;
+		}
+		const stored = localStorage.getItem(`gm:${key}`);
+		return stored === null ? defaultValue : JSON.parse(stored);
+	}
+	function GM_setValue$1(key, value) {
+		const fn = rawFn("GM_setValue");
+		if (fn) try {
+			fn(key, value);
+			return;
+		} catch {}
+		localStorage.setItem(`gm:${key}`, JSON.stringify(value));
+	}
+	function GM_registerMenuCommand$1(name, callback) {
+		const fn = rawFn("GM_registerMenuCommand");
+		if (fn) try {
+			fn(name, callback);
+		} catch {}
+	}
 	var handleTransitionEndOnce = (element, propertyName, callback) => {
 		const handleTransitionEnd = (event) => {
 			if (event.propertyName === propertyName) {
@@ -79,15 +103,15 @@
 		};
 	}
 	function countViewTime() {
-		if (!_GM_getValue("view-time-toast", true)) return;
 		window.addEventListener("load", () => {
-			let storedTime = _GM_getValue("view-time", 0);
-			const storedTimestamp = _GM_getValue("timestamp", Date.now());
+			if (!GM_getValue$1("view-time-toast", true)) return;
+			let storedTime = GM_getValue$1("view-time", 0);
+			const storedTimestamp = GM_getValue$1("timestamp", Date.now());
 			const diff = Math.floor((Date.now() - storedTimestamp) / 1e3 / 60);
 			storedTime = diff < 3 ? storedTime + diff : 0;
 			function renewTime() {
-				_GM_setValue("view-time", storedTime);
-				_GM_setValue("timestamp", Date.now());
+				GM_setValue$1("view-time", storedTime);
+				GM_setValue$1("timestamp", Date.now());
 			}
 			renewTime();
 			setInterval(function() {
@@ -218,12 +242,12 @@
 			sidebarFab.classList.remove("active");
 		}
 		function slideLeft() {
-			const isSidebarRight = _GM_getValue("message-sidebar-change-right", false);
+			const isSidebarRight = GM_getValue$1("message-sidebar-change-right", false);
 			if (isSidebarRight && !messageContainer.hasAttribute("sidebar")) show();
 			if (!isSidebarRight && messageContainer.hasAttribute("sidebar")) hide();
 		}
 		function slideRight() {
-			const isSidebarRight = _GM_getValue("message-sidebar-change-right", false);
+			const isSidebarRight = GM_getValue$1("message-sidebar-change-right", false);
 			if (isSidebarRight && messageContainer.hasAttribute("sidebar")) hide();
 			if (!isSidebarRight && !messageContainer.hasAttribute("sidebar")) show();
 		}
@@ -363,11 +387,11 @@ div.bili-live-card__info {
 			css11: "div.bpx-player-toast-wrap {display: none !important;}"
 		};
 		readScriptSetting();
-		if (_GM_getValue("home-single-column", false)) homeSingleColumn();
-		if (_GM_getValue("fold-desc-tag", false)) foldDescTag$1();
+		if (GM_getValue$1("home-single-column", false)) homeSingleColumn();
+		if (GM_getValue$1("fold-desc-tag", false)) foldDescTag$1();
 		waitDOMContentLoaded(() => {
 			createSettingPanel();
-			_GM_registerMenuCommand("元素隐藏设置", () => {
+			GM_registerMenuCommand$1("元素隐藏设置", () => {
 				const settingPanel = document.getElementById("setting-panel-style");
 				settingPanel.style.display = "flex";
 				setTimeout(() => {
@@ -376,7 +400,7 @@ div.bili-live-card__info {
 			});
 		});
 		function readScriptSetting(diference = void 0) {
-			const settingShowHidden = _GM_getValue("settingShowHidden", defaultValue);
+			const settingShowHidden = GM_getValue$1("settingShowHidden", defaultValue);
 			const values = Object.values(css);
 			if (diference) {
 				for (const [index, value] of diference.entries()) if (value) if (settingShowHidden[index]) appendStyle(`script-pre-style-${index}`, values[index]);
@@ -407,12 +431,12 @@ div.bili-live-card__info {
 			});
 			document.body.appendChild(settingPanel);
 			const checkboxElements = settingPanel.querySelectorAll(".setting-checkboxes input[type=\"checkbox\"]");
-			const oldValues = _GM_getValue("settingShowHidden", defaultValue);
+			const oldValues = GM_getValue$1("settingShowHidden", defaultValue);
 			for (const [index, element] of Array.from(checkboxElements).entries()) element.checked = oldValues[index];
 			settingPanel.querySelector("#setting-conform-1").addEventListener("click", () => {
-				const oldValues = _GM_getValue("settingShowHidden", defaultValue);
+				const oldValues = GM_getValue$1("settingShowHidden", defaultValue);
 				const selectedValues = Array.from(checkboxElements).map((checkbox) => checkbox.checked);
-				_GM_setValue("settingShowHidden", selectedValues);
+				GM_setValue$1("settingShowHidden", selectedValues);
 				readScriptSetting(selectedValues.map((value, index) => value !== oldValues[index]));
 				settingPanel.removeAttribute("show");
 				settingPanel.addEventListener("transitionend", () => {
@@ -469,7 +493,7 @@ div.bili-live-card__info {
 		};
 		initSettings();
 		createSettingPanel();
-		_GM_registerMenuCommand("操作偏好设置", () => {
+		GM_registerMenuCommand$1("操作偏好设置", () => {
 			const settingPanel = document.getElementById("setting-panel-preference");
 			settingPanel.style.display = "flex";
 			setTimeout(() => {
@@ -477,10 +501,10 @@ div.bili-live-card__info {
 			}, 10);
 		});
 		function initSettings() {
-			if (_GM_getValue("ban-actionbar-hidden", false)) banActionbarHidden();
-			if (_GM_getValue("message-sidebar-change-right", false)) messageSidebarRight();
-			if (_GM_getValue("menu-dialog-move-down", false)) menuDialogMoveDown();
-			if (!_GM_getValue(menuOptions.key, menuOptions.value).every((item) => item === false)) modifyMenuOptions();
+			if (GM_getValue$1("ban-actionbar-hidden", false)) banActionbarHidden();
+			if (GM_getValue$1("message-sidebar-change-right", false)) messageSidebarRight();
+			if (GM_getValue$1("menu-dialog-move-down", false)) menuDialogMoveDown();
+			if (!GM_getValue$1(menuOptions.key, menuOptions.value).every((item) => item === false)) modifyMenuOptions();
 		}
 		function banActionbarHidden() {
 			appendStyle("ban-actionbar-hidden", `
@@ -498,7 +522,7 @@ div.bili-live-card__info {
     `);
 		}
 		function menuDialogMoveDown() {
-			const downValue = _GM_getValue("menu-dialog-move-down-value", "20");
+			const downValue = GM_getValue$1("menu-dialog-move-down-value", "20");
 			appendStyle("menu-dialog-move-down-value", `
       div.bili-header .v-popover.v-popover {
         top: unset !important;
@@ -511,7 +535,7 @@ div.bili-live-card__info {
     `);
 		}
 		function modifyMenuOptions() {
-			const options = _GM_getValue(menuOptions.key, menuOptions.value);
+			const options = GM_getValue$1(menuOptions.key, menuOptions.value);
 			let selector = "";
 			options.forEach((value, index) => {
 				if (value) selector += `#header-in-menu ul li:nth-of-type(${index + 1}), `;
@@ -551,18 +575,18 @@ div.bili-live-card__info {
 			const customElements = settingPanel.querySelectorAll(".setting-checkboxes input[type=\"number\"], .setting-checkboxes select");
 			checkboxElements.forEach((checkbox, index) => {
 				const key = Object.keys(keyValues)[index];
-				checkbox.checked = _GM_getValue(key, keyDefaults[key] ?? false);
+				checkbox.checked = GM_getValue$1(key, keyDefaults[key] ?? false);
 			});
 			customElements.forEach((elem, index) => {
-				elem.value = _GM_getValue(Object.keys(customKeyValues)[index], Object.values(customKeyValues)[index]);
+				elem.value = GM_getValue$1(Object.keys(customKeyValues)[index], Object.values(customKeyValues)[index]);
 			});
 			settingPanel.querySelector("#setting-conform-2").addEventListener("click", () => {
 				const selectedValues = Array.from(checkboxElements).map((checkbox) => checkbox.checked);
 				const writenValues = Array.from(customElements).map((elem) => elem.value);
 				selectedValues.forEach((value, index) => {
 					const key = Object.keys(keyValues)[index];
-					if (value !== _GM_getValue(key, keyDefaults[key] ?? false)) {
-						_GM_setValue(key, value);
+					if (value !== GM_getValue$1(key, keyDefaults[key] ?? false)) {
+						GM_setValue$1(key, value);
 						switch (key) {
 							case "ban-actionbar-hidden":
 								if (value) banActionbarHidden();
@@ -585,8 +609,8 @@ div.bili-live-card__info {
 				});
 				writenValues.forEach((value, index) => {
 					const key = Object.keys(customKeyValues)[index];
-					if (value !== _GM_getValue(key, Object.values(customKeyValues)[index])) {
-						_GM_setValue(key, value);
+					if (value !== GM_getValue$1(key, Object.values(customKeyValues)[index])) {
+						GM_setValue$1(key, value);
 						if (key === "menu-dialog-move-down-value") {
 							document.getElementById(key)?.remove();
 							menuDialogMoveDown();
@@ -634,14 +658,14 @@ div.bili-live-card__info {
 				});
 				document.body.appendChild(settingPanel);
 				const checkboxElements = settingPanel.querySelectorAll(".setting-checkboxes input[type=\"checkbox\"]");
-				const oldValues = _GM_getValue(menuOptions.key, menuOptions.value);
+				const oldValues = GM_getValue$1(menuOptions.key, menuOptions.value);
 				checkboxElements.forEach((element, index) => {
 					element.checked = oldValues[index];
 				});
 				settingPanel.querySelector("#setting-conform-3").addEventListener("click", () => {
 					const selectedValues = Array.from(checkboxElements).map((checkbox) => checkbox.checked);
 					if (selectedValues.some((value, index) => value !== oldValues[index])) {
-						_GM_setValue(menuOptions.key, selectedValues);
+						GM_setValue$1(menuOptions.key, selectedValues);
 						document.head.querySelector("#modify-menu-options")?.remove();
 						modifyMenuOptions();
 					}
@@ -652,7 +676,7 @@ div.bili-live-card__info {
 	}
 	function setScriptHelp() {
 		createSettingPanel();
-		_GM_registerMenuCommand("脚本说明", () => {
+		GM_registerMenuCommand$1("脚本说明", () => {
 			const settingPanel = document.getElementById("setting-panel-help");
 			settingPanel.style.display = "flex";
 			setTimeout(() => {
@@ -685,12 +709,12 @@ div.bili-live-card__info {
 					settingPanel.style.cssText = "";
 				}, { once: true });
 			});
-			if (_GM_getValue("is-first-use", true)) {
+			if (GM_getValue$1("is-first-use", true)) {
 				settingPanel.style.display = "flex";
 				setTimeout(() => {
 					settingPanel.setAttribute("show", "");
 				}, 10);
-				_GM_setValue("is-first-use", false);
+				GM_setValue$1("is-first-use", false);
 			}
 		}
 	}
@@ -821,7 +845,7 @@ div.bili-live-card__info {
 		function handleTouchMove() {
 			searchOverlay.click();
 		}
-		if (_GM_getValue("touch-gesture", true)) {
+		if (GM_getValue$1("touch-gesture", true)) {
 			searchOverlay.addEventListener("touchstart", () => searchOverlay.addEventListener("touchmove", handleTouchMove, { once: true }));
 			searchOverlay.addEventListener("touchend", () => searchOverlay.removeEventListener("touchmove", handleTouchMove));
 		}
@@ -2148,7 +2172,7 @@ div.bili-live-card__info {
 			});
 		}
 		function setFullbtn() {
-			if (!_GM_getValue("touch-gesture", true)) return;
+			if (!GM_getValue$1("touch-gesture", true)) return;
 			let clickTimer = 0;
 			const fullBtn = document.getElementById("full-now");
 			function playVideo() {
@@ -2314,7 +2338,7 @@ div.bili-live-card__info {
 		window.addEventListener("scroll", preload);
 	}
 	function handleHeaderImage() {
-		const source = _GM_getValue("header-image-source", "unsplash");
+		const source = GM_getValue$1("header-image-source", "unsplash");
 		const mapping = {
 			bing: "https://api.suyanw.cn/api/bing.php",
 			unsplash: "https://unsplash.it/1600/900?random",
@@ -2842,7 +2866,7 @@ div.bili-dyn-item-draw__avatar {
 			clickTimer = setTimeout(() => {
 				if (isShown()) hideControlWrap();
 				else showControlWrap();
-				if (!_GM_getValue("ban-video-click-play", false)) if (video.paused) video.play();
+				if (!GM_getValue$1("ban-video-click-play", false)) if (video.paused) video.play();
 				else video.pause();
 			}, 250);
 		});
@@ -2859,7 +2883,7 @@ div.bili-dyn-item-draw__avatar {
 		videoArea.addEventListener("touchstart", (event) => {
 			event.stopPropagation();
 		});
-		if (_GM_getValue("video-click-unmute", false)) window.addEventListener("click", (event) => {
+		if (GM_getValue$1("video-click-unmute", false)) window.addEventListener("click", (event) => {
 			if (!videoArea.contains(event.target)) unmute();
 		});
 	}
@@ -2898,8 +2922,8 @@ div.bili-dyn-item-draw__avatar {
 			startY = event.touches[0].clientY;
 			startTime = video.currentTime;
 			videoWidth = video.clientWidth;
-			times = Number(_GM_getValue("video-longpress-speed", "2"));
-			isSlideAllowed = _GM_getValue("allow-video-slid", false);
+			times = Number(GM_getValue$1("video-longpress-speed", "2"));
+			isSlideAllowed = GM_getValue$1("allow-video-slid", false);
 			timeoutId = setTimeout(() => {
 				video.playbackRate = video.playbackRate * times;
 				isLongPress = true;
@@ -2961,7 +2985,7 @@ div.bili-dyn-item-draw__avatar {
 		}
 	}
 	function foldDescTag() {
-		if (!_GM_getValue("fold-desc-tag", false)) return;
+		if (!GM_getValue$1("fold-desc-tag", false)) return;
 		const leftContainer = document.querySelector(".left-container");
 		const commentApp = document.querySelector("#commentapp");
 		const foldBtn = Object.assign(document.createElement("div"), {
@@ -3031,7 +3055,7 @@ div.bili-dyn-item-draw__avatar {
 		}
 	}
 	function coverContextMenu() {
-		if (!_GM_getValue("cover-context-menu", false)) return;
+		if (!GM_getValue$1("cover-context-menu", false)) return;
 		window.addEventListener("contextmenu", (event) => {
 			if (event.target.className === "message-content") event.stopImmediatePropagation();
 		}, true);

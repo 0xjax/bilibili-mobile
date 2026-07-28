@@ -1,4 +1,4 @@
-import { GM_getValue } from '$'
+import { GM_getValue } from '../utils/gm.ts'
 import { setSearchBtn } from './search.ts'
 import { setMenuBtn } from './menu.ts'
 import { setSidebarBtn } from './sidebar.ts'

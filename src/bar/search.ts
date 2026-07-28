@@ -1,4 +1,4 @@
-import { GM_getValue } from '$'
+import { GM_getValue } from '../utils/gm.ts'
 
 /**
  * 设置不同页面的搜索事件的函数

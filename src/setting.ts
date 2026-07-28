@@ -1,4 +1,4 @@
-import { GM_getValue, GM_setValue, GM_registerMenuCommand } from '$'
+import { GM_getValue, GM_setValue, GM_registerMenuCommand } from './utils/gm.ts'
 import { waitDOMContentLoaded } from './utils/wait.ts'
 
 function appendStyle(id: string, textContent: string) {

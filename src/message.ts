@@ -1,4 +1,4 @@
-import { GM_getValue } from '$'
+import { GM_getValue } from './utils/gm.ts'
 
 export function createUnfoldBtn() {
   const observer = new MutationObserver((mutations) =>

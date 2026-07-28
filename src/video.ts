@@ -1,4 +1,4 @@
-import { GM_getValue } from '$'
+import { GM_getValue } from './utils/gm.ts'
 import { handleCommentShadow } from './comment.ts'
 
 /**

@@ -1,4 +1,5 @@
-import { GM_getValue, GM_setValue, unsafeWindow } from '$'
+import { unsafeWindow } from '$'
+import { GM_getValue, GM_setValue } from './utils/gm.ts'
 import { handleTransitionEndOnce } from './utils/transition.ts'
 import { setupSlide } from './utils/slide.ts'
 
@@ -42,10 +43,10 @@ export function increaseVideoLoadSize() {
  * 网页计时提醒
  */
 export function countViewTime() {
-  if (!GM_getValue('view-time-toast', true)) return
-
   // addEventListener 避免覆盖页面上已有的 onload
   window.addEventListener('load', () => {
+    if (!GM_getValue('view-time-toast', true)) return
+
     let storedTime = GM_getValue('view-time', 0)
     const storedTimestamp = GM_getValue('timestamp', Date.now())
 
