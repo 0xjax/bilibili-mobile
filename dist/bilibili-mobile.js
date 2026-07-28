@@ -2215,19 +2215,7 @@ div#body {
 }` }));
 			});
 		});
-		setupPhotoViewer();
 		setupCommentsPopup();
-	}
-	function setupPhotoViewer() {
-		document.addEventListener("click", (event) => {
-			const pswp = document.querySelector(".pswp");
-			if (!pswp) return;
-			const target = event.target;
-			if (target.closest(".pswp__item") || target.classList.contains("pswp__bg")) {
-				event.stopImmediatePropagation();
-				pswp.querySelector(".pswp__button--close")?.click();
-			}
-		}, true);
 	}
 	function setupCommentsPopup() {
 		onShadowRoot("bili-comments-popup", (root, host) => {

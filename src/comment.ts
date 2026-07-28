@@ -170,29 +170,7 @@ div#body {
     })
   })
 
-  setupPhotoViewer()
   setupCommentsPopup()
-}
-
-// 评论区图片预览（B 站已改用 PhotoSwipe v5 的 div.pswp，纯 light DOM）
-function setupPhotoViewer() {
-  // 事件委托：点击图片或背景关闭查看器，屏蔽原生 click-to-zoom
-  document.addEventListener(
-    'click',
-    (event) => {
-      const pswp = document.querySelector('.pswp')
-      if (!pswp) return
-
-      const target = event.target as HTMLElement
-      if (target.closest('.pswp__item') || target.classList.contains('pswp__bg')) {
-        event.stopImmediatePropagation()
-        ;(
-          pswp.querySelector('.pswp__button--close') as HTMLElement | null
-        )?.click()
-      }
-    },
-    true,
-  )
 }
 
 // 评论区详情、笔记弹层
