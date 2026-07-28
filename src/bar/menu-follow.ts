@@ -28,16 +28,16 @@ export async function loadFollowList(orderType: number) {
     content.removeEventListener('scroll', onScroll)
 
     const remainingData = total - pageNumber * pageSize
-    if (remainingData <= pageSize) {
-      pageSize = remainingData
-    } else {
+    if (remainingData <= 0) return
+
+    const requestSize = Math.min(remainingData, pageSize)
+    if (remainingData > pageSize) {
       setTimeout(() => {
         content.addEventListener('scroll', onScroll)
       }, 2000)
-      console.log('Scroll to bottom')
     }
 
-    const data = await getFollowList(++pageNumber, pageSize, orderType)
+    const data = await getFollowList(++pageNumber, requestSize, orderType)
 
     const list = data.list
     list.forEach(addElementByItem)
@@ -148,7 +148,7 @@ export async function loadFollowList(orderType: number) {
         '.be-dropdown-menu',
       ) as HTMLElement
       dropdownMenu.style.display = 'none'
-      fansAction.style.zIndex = `${2}`
+      fansAction.style.zIndex = ''
       more.style.color = ''
     })
   }

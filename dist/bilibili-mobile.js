@@ -81,7 +81,7 @@
 	}
 	function countViewTime() {
 		if (!_GM_getValue("view-time-toast", true)) return;
-		window.onload = function() {
+		window.addEventListener("load", () => {
 			let storedTime = _GM_getValue("view-time", 0);
 			const storedTimestamp = _GM_getValue("timestamp", Date.now());
 			const diff = Math.floor((Date.now() - storedTimestamp) / 1e3 / 60);
@@ -112,7 +112,7 @@
 					});
 				}
 			}, 6e4);
-		};
+		});
 	}
 	function handleScroll(type) {
 		scrollToHidden(type);
@@ -192,11 +192,15 @@
 			document.querySelector(`.vui_tabs--nav-item:nth-child(${navItems[clickIndex]})`).click();
 		}
 		setupSlide(container, 55, () => {
-			clickIndex++;
-			clickSortTab();
+			if (clickIndex < navItems.length - 1) {
+				clickIndex++;
+				clickSortTab();
+			}
 		}, () => {
-			clickIndex--;
-			clickSortTab();
+			if (clickIndex > 0) {
+				clickIndex--;
+				clickSortTab();
+			}
 		});
 	}
 	function slideMessageSidebar() {
@@ -245,11 +249,15 @@
 			});
 			let index = siblings.findIndex((el) => el === current);
 			setupSlide(document.querySelector("#app"), 55, () => {
-				index++;
-				siblings[index].click();
+				if (index < siblings.length - 1) {
+					index++;
+					siblings[index].click();
+				}
 			}, () => {
-				index--;
-				siblings[index].click();
+				if (index > 0) {
+					index--;
+					siblings[index].click();
+				}
 			});
 		}
 	}
@@ -1008,14 +1016,12 @@ div.bili-live-card__info {
 			if (Math.abs(scrollTop + clientHeight - scrollHeight) > 1) return;
 			content.removeEventListener("scroll", onScroll);
 			const remainingData = total - pageNumber * pageSize;
-			if (remainingData <= pageSize) pageSize = remainingData;
-			else {
-				setTimeout(() => {
-					content.addEventListener("scroll", onScroll);
-				}, 2e3);
-				console.log("Scroll to bottom");
-			}
-			(await getFollowList(++pageNumber, pageSize, orderType)).list.forEach(addElementByItem);
+			if (remainingData <= 0) return;
+			const requestSize = Math.min(remainingData, pageSize);
+			if (remainingData > pageSize) setTimeout(() => {
+				content.addEventListener("scroll", onScroll);
+			}, 2e3);
+			(await getFollowList(++pageNumber, requestSize, orderType)).list.forEach(addElementByItem);
 		}
 		content.addEventListener("scroll", onScroll);
 		const firstItem = document.querySelector("#follow-list-dialog .header-tabs-panel").firstElementChild;
@@ -1094,7 +1100,7 @@ div.bili-live-card__info {
 			more.addEventListener("mouseleave", () => {
 				const dropdownMenu = more.querySelector(".be-dropdown-menu");
 				dropdownMenu.style.display = "none";
-				fansAction.style.zIndex = `2`;
+				fansAction.style.zIndex = "";
 				more.style.color = "";
 			});
 		}
@@ -1243,16 +1249,16 @@ div.bili-live-card__info {
 			return `${hrs ? `${hrs}:` : ""}${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 		}
 		function formatViewTime(timestamp) {
-			const days = Math.floor(timestamp / 86400);
-			const hrs = Math.floor(timestamp % 86400 / 3600);
-			const mins = Math.floor(timestamp % 3600 / 60);
-			const now = Math.floor(Date.now() / 1e3);
-			const today = Math.floor(now / 86400);
-			return `${{
+			const viewDate = new Date(timestamp * 1e3);
+			const dayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+			const dayDiff = Math.round((dayStart(new Date()) - dayStart(viewDate)) / 864e5);
+			const dayText = {
 				0: "今天",
 				1: "昨天",
 				2: "前天"
-			}[today - days] || `${today - days}天前`} ${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+			}[dayDiff] || `${dayDiff}天前`;
+			const pad = (n) => n.toString().padStart(2, "0");
+			return `${dayText} ${pad(viewDate.getHours())}:${pad(viewDate.getMinutes())}`;
 		}
 	}
 	function handleDynamicShowMore() {
@@ -1388,7 +1394,7 @@ div.bili-live-card__info {
         <li data-refer="[data-idx=history]">历史</li>
         <li data-refer=".header-avatar-wrap--container">主页</li>
         <li data-refer="[data-idx=follow]">关注</li>
-      </li>
+      </ul>
     </div>
     `
 		});
@@ -2138,8 +2144,9 @@ div.bili-dyn-item-draw__avatar {
 					}
 				} else if (type === "space") {
 					const followRow = document.querySelector(".upinfo .operations");
+					if (!followRow) return;
 					followRow.style.transition = ".4s ease-in";
-					followRow?.classList.toggle("show");
+					followRow.classList.toggle("show");
 					followRow.addEventListener("transitionend", () => {
 						followRow.style.transition = "";
 					}, { once: true });
@@ -2410,11 +2417,12 @@ div.bili-dyn-item-draw__avatar {
 			cardEventWrap.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
 			lastPreviewCard = cardEventWrap;
 			if (!cardEventWrap.querySelector(".inline-progress-bar")) {
+				let attempts = 0;
 				const intervalId = setInterval(() => {
 					if (cardEventWrap.querySelector("video")) {
 						createProgressBar(cardEventWrap);
 						clearInterval(intervalId);
-					}
+					} else if (++attempts >= 10) clearInterval(intervalId);
 				}, 1e3);
 			}
 		}
@@ -2634,10 +2642,14 @@ div.bili-dyn-item-draw__avatar {
 		let progressInfo;
 		let progressInfoCreated = false;
 		let isCreatingProgressInfo = false;
+		let videoWidth = 0;
+		let pendingTime = 0;
+		let lastSeekTime = 0;
 		video.addEventListener("touchstart", (event) => {
 			startX = event.touches[0].clientX;
 			startY = event.touches[0].clientY;
 			startTime = video.currentTime;
+			videoWidth = video.clientWidth;
 			times = Number(_GM_getValue("video-longpress-speed", "2"));
 			isSlideAllowed = _GM_getValue("allow-video-slid", false);
 			timeoutId = setTimeout(() => {
@@ -2666,10 +2678,15 @@ div.bili-dyn-item-draw__avatar {
 						isCreatingProgressInfo = false;
 					}
 					video.pause();
-					const progressChange = deltaX / video.clientWidth * video.duration;
-					video.currentTime = startTime + progressChange;
+					const progressChange = deltaX / videoWidth * video.duration;
+					pendingTime = Math.min(Math.max(startTime + progressChange, 0), video.duration);
+					const now = Date.now();
+					if (now - lastSeekTime > 200) {
+						video.currentTime = pendingTime;
+						lastSeekTime = now;
+					}
 					if (progressInfoCreated) {
-						progressInfo.textContent = `进度: ${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+						progressInfo.textContent = `进度: ${formatTime(pendingTime)} / ${formatTime(video.duration)}`;
 						progressInfo.style.display = "block";
 					}
 				}
@@ -2682,6 +2699,7 @@ div.bili-dyn-item-draw__avatar {
 				isLongPress = false;
 			}
 			if (isSliding) {
+				video.currentTime = pendingTime;
 				video.play();
 				progressInfo.style.display = "";
 				isSliding = false;
@@ -2730,7 +2748,7 @@ div.bili-dyn-item-draw__avatar {
 			document.head.querySelector("#ending-content-scale")?.remove();
 			addEndingScale();
 		}
-		screen.orientation.addEventListener("change", renewEndingScale);
+		screen.orientation?.addEventListener("change", renewEndingScale);
 		window.addEventListener("resize", renewEndingScale);
 	}
 	function createUnfoldBtn() {

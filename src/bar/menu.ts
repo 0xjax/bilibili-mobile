@@ -99,7 +99,7 @@ export function setMenuBtn() {
         <li data-refer="[data-idx=history]">历史</li>
         <li data-refer=".header-avatar-wrap--container">主页</li>
         <li data-refer="[data-idx=follow]">关注</li>
-      </li>
+      </ul>
     </div>
     `,
   })

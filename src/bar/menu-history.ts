@@ -196,12 +196,12 @@ export async function handleHistoryShowMore() {
   }
 
   function formatViewTime(timestamp: number) {
-    const days = Math.floor(timestamp / 86400)
-    const hrs = Math.floor((timestamp % 86400) / 3600)
-    const mins = Math.floor((timestamp % 3600) / 60)
-
-    const now = Math.floor(Date.now() / 1000)
-    const today = Math.floor(now / 86400)
+    const viewDate = new Date(timestamp * 1000)
+    const dayStart = (date: Date) =>
+      new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+    const dayDiff = Math.round(
+      (dayStart(new Date()) - dayStart(viewDate)) / 86400000,
+    )
 
     const dayTextMap = {
       0: '今天',
@@ -209,8 +209,9 @@ export async function handleHistoryShowMore() {
       2: '前天',
     } as { [key: number]: string }
 
-    const dayText = dayTextMap[today - days] || `${today - days}天前`
+    const dayText = dayTextMap[dayDiff] || `${dayDiff}天前`
+    const pad = (n: number) => n.toString().padStart(2, '0')
 
-    return `${dayText} ${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+    return `${dayText} ${pad(viewDate.getHours())}:${pad(viewDate.getMinutes())}`
   }
 }

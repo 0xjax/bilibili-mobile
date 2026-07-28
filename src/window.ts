@@ -44,7 +44,8 @@ export function increaseVideoLoadSize() {
 export function countViewTime() {
   if (!GM_getValue('view-time-toast', true)) return
 
-  window.onload = function () {
+  // addEventListener 避免覆盖页面上已有的 onload
+  window.addEventListener('load', () => {
     let storedTime = GM_getValue('view-time', 0)
     const storedTimestamp = GM_getValue('timestamp', Date.now())
 
@@ -88,7 +89,7 @@ export function countViewTime() {
         })
       }
     }, 60000)
-  }
+  })
 }
 
 /**
@@ -219,12 +220,16 @@ function slideSearchSort() {
     container,
     55,
     () => {
-      clickIndex++
-      clickSortTab()
+      if (clickIndex < navItems.length - 1) {
+        clickIndex++
+        clickSortTab()
+      }
     },
     () => {
-      clickIndex--
-      clickSortTab()
+      if (clickIndex > 0) {
+        clickIndex--
+        clickSortTab()
+      }
     },
   )
 }
@@ -304,12 +309,16 @@ function handleSpaceSwipe() {
       container,
       55,
       () => {
-        index++
-        siblings[index].click()
+        if (index < siblings.length - 1) {
+          index++
+          siblings[index].click()
+        }
       },
       () => {
-        index--
-        siblings[index].click()
+        if (index > 0) {
+          index--
+          siblings[index].click()
+        }
       },
     )
   }

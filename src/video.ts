@@ -248,11 +248,15 @@ function handleVideoInteraction() {
   let progressInfo: HTMLElement
   let progressInfoCreated = false // 标志是否已创建 progressInfo 元素
   let isCreatingProgressInfo = false // 避免 progressInfo 创建完成前被重复创建
+  let videoWidth = 0
+  let pendingTime = 0
+  let lastSeekTime = 0
 
   video.addEventListener('touchstart', (event) => {
     startX = event.touches[0].clientX
     startY = event.touches[0].clientY
     startTime = video.currentTime
+    videoWidth = video.clientWidth
     times = Number(GM_getValue('video-longpress-speed', '2'))
     isSlideAllowed = GM_getValue('allow-video-slid', false)
 
@@ -296,12 +300,22 @@ function handleVideoInteraction() {
         }
 
         video.pause()
-        const progressChange = (deltaX / video.clientWidth) * video.duration
-        video.currentTime = startTime + progressChange
+        const progressChange = (deltaX / videoWidth) * video.duration
+        pendingTime = Math.min(
+          Math.max(startTime + progressChange, 0),
+          video.duration,
+        )
+
+        // seek 开销大，滑动中最多每 200ms 一次，松手时最终定位
+        const now = Date.now()
+        if (now - lastSeekTime > 200) {
+          video.currentTime = pendingTime
+          lastSeekTime = now
+        }
 
         if (progressInfoCreated) {
           // 显示进度信息
-          progressInfo.textContent = `进度: ${formatTime(video.currentTime)} / ${formatTime(video.duration)}`
+          progressInfo.textContent = `进度: ${formatTime(pendingTime)} / ${formatTime(video.duration)}`
           progressInfo.style.display = 'block'
         }
       }
@@ -317,6 +331,7 @@ function handleVideoInteraction() {
     }
 
     if (isSliding) {
+      video.currentTime = pendingTime
       video.play()
       // 隐藏进度信息
       progressInfo.style.display = ''
@@ -380,6 +395,6 @@ function setEndingContent() {
     addEndingScale()
   }
 
-  screen.orientation.addEventListener('change', renewEndingScale)
+  screen.orientation?.addEventListener('change', renewEndingScale)
   window.addEventListener('resize', renewEndingScale)
 }

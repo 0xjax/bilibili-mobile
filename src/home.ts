@@ -278,9 +278,12 @@ export function handleVideoCard() {
     lastPreviewCard = cardEventWrap
 
     if (!cardEventWrap.querySelector('.inline-progress-bar')) {
+      let attempts = 0
       const intervalId = setInterval(() => {
         if (cardEventWrap.querySelector('video')) {
           createProgressBar(cardEventWrap)
+          clearInterval(intervalId)
+        } else if (++attempts >= 10) {
           clearInterval(intervalId)
         }
       }, 1000)
