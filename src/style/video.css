@@ -92,7 +92,8 @@ body[scroll-hidden] {
     z-index: 1;
 }
 
-#mirror-vdcon[sidebar] .left-container::after #mirror-vdcon[sidebar] .playlist-container--left::after {
+#mirror-vdcon[sidebar] .left-container::after,
+#mirror-vdcon[sidebar] .playlist-container--left::after {
     pointer-events: auto;
     opacity: 1;
 }
