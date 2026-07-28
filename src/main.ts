@@ -27,8 +27,6 @@ import { videoInteraction } from './video.js'
 import { createUnfoldBtn, coverContextMenu } from './message.ts'
 import { waitDOMContentLoaded } from './utils/wait.ts'
 ;(function () {
-  // setInterval(() => { debugger }, 100)
-
   if (window.top !== window.self) {
     return
   } // 检查当前执行环境是否为顶级窗口
@@ -83,9 +81,19 @@ import { waitDOMContentLoaded } from './utils/wait.ts'
     handleScriptPreSetting()
     waitDOMContentLoaded(() => {
       handleScriptSetting()
-      handleActionbar(type)
       handleScroll(type)
       setScriptHelp()
+
+      document.body.appendChild(
+        Object.assign(document.createElement('div'), { id: 'toast' }),
+      )
+
+      // 悬浮底栏只在有专属按钮布局的页面注入
+      if (
+        ['home', 'video', 'list', 'search', 'space', 'message'].includes(type)
+      ) {
+        handleActionbar(type)
+      }
     })
   }
   handleCommonSettings(type)

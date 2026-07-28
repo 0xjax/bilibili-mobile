@@ -41,10 +41,6 @@ export function handleActionbar(type: string): void {
   })
   document.body.appendChild(actionbar)
 
-  document.body.appendChild(
-    Object.assign(document.createElement('div'), { id: 'toast' }),
-  )
-
   actionbar.classList.add(type)
   setHomeBtn()
   setSearchBtn(type)
