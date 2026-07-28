@@ -7,7 +7,7 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"moduleResolution": "bundler",
-		"types": ["vite/client"],
+		"types": ["vite/client", "vite-plugin-monkey/client"],
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
