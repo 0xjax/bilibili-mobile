@@ -1,4 +1,3 @@
-import { touchZoomWrap } from './utils/zoom.ts'
 import { injectStyleIntoShadows, onShadowRoot } from './utils/shadow.ts'
 
 let initialized = false
@@ -171,55 +170,29 @@ div#body {
     })
   })
 
-  setupPhotoSwipe()
+  setupPhotoViewer()
   setupCommentsPopup()
 }
 
-// 评论区图片预览
-function setupPhotoSwipe() {
-  injectStyleIntoShadows(
-    `
-#container {z-index:3;}
-#thumb {z-index: 4;}
-#prev, #next, #close {visibility: hidden;}
-#item {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-#zoom-wrap {
-  position: unset !important;
-  transform: none !important;
-}`,
-    'bili-photoswipe',
+// 评论区图片预览（B 站已改用 PhotoSwipe v5 的 div.pswp，纯 light DOM）
+function setupPhotoViewer() {
+  // 事件委托：点击图片或背景关闭查看器，屏蔽原生 click-to-zoom
+  document.addEventListener(
+    'click',
+    (event) => {
+      const pswp = document.querySelector('.pswp')
+      if (!pswp) return
+
+      const target = event.target as HTMLElement
+      if (target.closest('.pswp__item') || target.classList.contains('pswp__bg')) {
+        event.stopImmediatePropagation()
+        ;(
+          pswp.querySelector('.pswp__button--close') as HTMLElement | null
+        )?.click()
+      }
+    },
+    true,
   )
-
-  onShadowRoot('bili-photoswipe', (root) => {
-    const wire = (): boolean => {
-      const zoomWrap = root.querySelector('#zoom-wrap') as HTMLElement | null
-      if (!zoomWrap) return false
-
-      zoomWrap.addEventListener(
-        'click',
-        (event) => {
-          event.stopImmediatePropagation() // 禁用点击
-          ;(root.querySelector('#close') as HTMLElement | null)?.click()
-        },
-        { capture: true, once: true },
-      )
-
-      touchZoomWrap(zoomWrap, root)
-      return true
-    }
-
-    // attachShadow 时内容可能尚未渲染，root 内一次性观察兜底
-    if (!wire()) {
-      const observer = new MutationObserver(() => {
-        if (wire()) observer.disconnect()
-      })
-      observer.observe(root, { childList: true, subtree: true })
-    }
-  })
 }
 
 // 评论区详情、笔记弹层
