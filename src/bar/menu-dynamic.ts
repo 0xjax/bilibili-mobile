@@ -19,6 +19,7 @@ export function handleDynamicShowMore() {
   const dynamicContent = document.querySelector(
     '.dynamic-panel-popover>.header-tabs-panel__content',
   ) as HTMLElement
+  if (!dynamicContent) return
   const dynamicAll = dynamicContent.querySelector('.dynamic-all')
 
   let loadedTitle: string[] = []

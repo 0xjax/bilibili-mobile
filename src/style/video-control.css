@@ -218,56 +218,55 @@ div.bpx-player-ctrl-subtitle-box {
     flex: none;
 }
 
-/* 隐藏旧控制栏 */
-.bpx-player-control-wrap:not(.new) {
-    display: none;
+/* 控制栏可见性完全由 ctrl-shown 属性管理，不再依赖 .new 类 */
+
+/* 彻底接管控制栏可见性，屏蔽 B 站原生 data-ctrl-hidden 隐藏逻辑 */
+.bpx-player-control-wrap,
+.bpx-player-control-entity {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
 }
 
-/* 窄屏不禁用控制条和阴影 (新控制栏默认不禁用阴影) */
+/* 窄屏不禁用控制条和阴影 */
 .bpx-player-control-entity,
 .bpx-player-control-mask {
     display: block !important;
-}
-
-/* 隐藏控制条时不响应点击 */
-.bpx-player-container[data-ctrl-hidden=true] .bpx-player-control-bottom {
-    display: none;
 }
 
 /********************************** 控制栏隐藏 (覆盖原显隐：3级选择器覆盖2级) **********************************/
 
 /* control-bottom 和 mask (阴影) */
 .bpx-player-container[ctrl-shown=false] .bpx-player-control-wrap .bpx-player-control-mask {
-    opacity: 0;
+    opacity: 0 !important;
     /* 渐变属性应用在需要变化的状态 */
     transition: opacity .2s ease-in;
 }
 
 .bpx-player-container[ctrl-shown=true] .bpx-player-control-wrap .bpx-player-control-mask {
-    opacity: 1;
+    opacity: 1 !important;
 }
 
 .bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-control-bottom {
-    opacity: 1;
-    display: flex;
-
+    opacity: 1 !important;
+    display: flex !important;
 }
 
 .bpx-player-container[ctrl-shown=false] .bpx-player-control-entity .bpx-player-control-bottom {
-    display: none;
+    display: none !important;
 }
 
 /* 进度条 */
 .bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-control-top,
 .bpx-player-container[ctrl-shown=false] .bpx-player-control-entity .bpx-player-shadow-progress-area {
-    opacity: 1;
-    visibility: visible;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .bpx-player-container[ctrl-shown=false] .bpx-player-control-entity .bpx-player-control-top,
 .bpx-player-container[ctrl-shown=true] .bpx-player-control-entity .bpx-player-shadow-progress-area {
-    opacity: 0;
-    visibility: hidden;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 /* 高能进度 */

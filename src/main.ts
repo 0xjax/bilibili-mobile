@@ -59,12 +59,13 @@ import { initShadowHook } from './utils/shadow.ts'
     location.hostname.indexOf('.'),
   )
 
-  const pathToTypeMap = {
+  const pathToTypeMap: Record<string, string> = {
     '/video': 'video',
     '/list': 'list',
+    '/bangumi': 'video',
   }
 
-  const getTypeFromPath = (map: { '/video': string; '/list': string }) => {
+  const getTypeFromPath = (map: Record<string, string>) => {
     for (const [prefix, type] of Object.entries(map)) {
       if (location.pathname.startsWith(prefix)) {
         return type
@@ -122,5 +123,27 @@ import { initShadowHook } from './utils/shadow.ts'
       break
     default:
       break
+  }
+
+  // ── SPA 导航检测（非视频页 → 视频页） ─────────────────────────────────
+  // B 站是 SPA，从首页点击视频时通过 pushState 导航，不会重新加载页面。
+  // 脚本启动时的 type 判断只执行一次，无法感知后续路由变化。
+  // 通过 MutationObserver 监听任意 DOM 变动，检测 #bilibili-player 出现。
+  if (type !== 'video' && type !== 'list') {
+    waitDOMContentLoaded(() => {
+      let videoInitDone = false
+      const videoObserver = new MutationObserver(() => {
+        const player = document.querySelector('#bilibili-player')
+        if (player) {
+          if (!videoInitDone) {
+            videoInitDone = true
+            videoInteraction()
+          }
+        } else {
+          videoInitDone = false
+        }
+      })
+      videoObserver.observe(document.body, { childList: true, subtree: true })
+    })
   }
 })()
