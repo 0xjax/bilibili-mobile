@@ -356,9 +356,13 @@ label:has([data-key=menu-dialog-move-down]:checked)+label {
 
 /* ------ 关注菜单视图 ------ */
 
-/* 添加的关注窗口 (历史弹窗外框 + 空间关注列表) */
+/* 添加的关注窗口（脚本自建弹窗 + 空间关注列表） */
 #follow-list-dialog {
     z-index: 2;
+    /* 不给宽度时面板会被内容撑到只有 229px（视口 390），右侧绝对定位的操作块
+       会把用户名盖住、只剩第一个字 */
+    width: 92%;
+    max-width: 620px;
 }
 
 /* 列表项 */
@@ -394,6 +398,8 @@ ul.follow-list-content {
     height: 20px;
     margin-bottom: 6px;
     display: inline-block;
+    /* 给右侧绝对定位的「已关注 / 更多」块让位，否则长名字会被它盖住 */
+    max-width: calc(100% - 108px);
 }
 
 /* 用户描述 */
