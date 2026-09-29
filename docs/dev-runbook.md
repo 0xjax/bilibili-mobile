@@ -112,6 +112,24 @@ bun scripts/dev/audit-selectors.ts --viewports mobile --wait 12000
 
 **教训**：`.basic-desc-info[style="height: 84px;"]` 一开始被我判成"疑似已死"，实测是活的 ——
 短简介视频上根本不会出现这个状态。只测一两个页面就下结论，会误删还在生效的规则。
+### 视频页/播放器的瞬态元素（实测：何时才存在、怎么验）
+
+| 选择器 | 何时才存在 | 怎么验 |
+|---|---|---|
+| `.bpx-player-sending-bar-left/right`、`#bilibili-player-placeholder-bottom` | **冷加载头 1~2 秒**（弹幕行的预加载灰块/白条） | 冷加载后 1.2s 快照（3s 就已经没了）。工具现已改为**加载期多次采样** |
+| `.bpx-player-dm-hint` | 加载约 3s 后 | 同上 |
+| `.bpx-player-ending-functions-follow` / `-upinfo` / `-buttons` / `-pagecallback`、`.bpx-player-ending-wrap[hidden]` | **视频播完的那一瞬间**（几秒后站点自动连播下一个视频，面板就消失） | `v.muted=true; v.play(); v.currentTime=v.duration-1`，**在 4s 内**快照；晚于 6s 就采样不到了 |
+| `.basic-desc-info[style="height: 84px;"]`、`#v_desc .toggle-btn` | **简介较长的视频**（短简介根本没有折叠控件） | 找文本长度 >100 的视频 |
+| `.back-to-top[show]` | 页面往下滚之后 | 滚到 2500px |
+| `.bili-user-profile` | 悬浮 UP 头像时**按需创建**（常驻的是 `.usercard-wrap`） | 悬浮头像 |
+| `.multi-page-v1 .cur-list`、`.cur-list ul.list-box/module-box …`、`.base-video-sections-v1 a.first-line-title`、`.playlist-container--left/right`、`.video-title-href`、`.show-more` | **多 P / 合集 / `/list` 页** | **尚未纳入审计覆盖**（还没找到有效的合集页 URL） |
+
+**教训（同一类误判我犯了三次）**：`.basic-desc-info[style="height: 84px;"]`、`.bpx-player-sending-bar-left/right`、
+`.bpx-player-ending-functions-*` 我先后判成「已死」，实测**全都是活的** —— 它们分别只在「长简介」
+「冷加载头两秒」「视频播完那一瞬」存在。
+
+**所以：不要按静态缺失删规则。** 能删的前提是在**所有已知状态下**都没出现过；否则一律保留，
+并把「何时存在」记到这张表里。
 ## CDP 调试脚本（scripts/cdp/，9222 端口直连）
 
 | 命令 | 用途 |
