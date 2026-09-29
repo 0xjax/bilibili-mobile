@@ -41,10 +41,14 @@
 ## 日常启动
 
 ```bash
-bun run build                        # 实测用 dist，不用 dev
-bun scripts/dev/install-dist.ts      # 装 dist 进 TM（自起临时静态服务 + 自动点安装弹窗）
+bun run build                        # 构建 + 自动装进调试 Chrome 的 TM（postbuild）；实测用 dist，不用 dev
 bun scripts/cdp/cdp-nav.ts <url包含>  # 刷新目标 tab
 ```
+
+- **`bun run build` 之后不用再单独装**：`package.json` 的 `postbuild` 会自动跑 `bun scripts/dev/install-dist.ts --soft`。
+  - 调试 Chrome 没开（9222 连不上）→ 只打一行 `WARNING ...（--soft：不影响构建结果）` 然后跳过，**绝不让 build 失败**。
+  - 需要严格模式（连不上就 exit 1，便于确认到底装没装）→ 手动跑 `bun scripts/dev/install-dist.ts`（不带 `--soft`）。
+  - **NOTE 代价**：自动装意味着**同版本 build 会走 TM 的「重新安装」，从而重置该脚本在 TM 里的设置**。要保留设置，就顺手把 `vite.config.js` 版号 +1 走「更新」路径。
 
 - **实测一律装 `dist/` 产物，不用 `bun run dev` 的 dev 壳脚本**：dev 与 build 产物行为可能不一致，dev 实测通过不代表生产行为。
 - **WARNING 同版本重装会重置脚本设置**：TM 的「重新安装」会清掉该脚本的设置。别照搬 missav 那条「gm.ts 有 localStorage 兜底所以设置不丢」——**本仓库不成立**：`src/utils/gm.ts` 的 `GM_setValue` 调通管理器 API 后就 return，只有 GM API 缺失时才写 localStorage 兜底。调试期间要保留设置，就改 `vite.config.js` 版号走「更新」路径。
