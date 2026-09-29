@@ -72,6 +72,26 @@ bun scripts/cdp/cdp-clear-emulation.ts <url包含>           # 测完务必清�
   - 所以**要连 UA / dpr 一起测，必须在同一个脚本会话里「设模拟 → 导航 → 测量」**。分两步跑会拿到「尺寸对但 UA 不对」的假状态。
 - **WARNING 设完不能立刻读**：同一个 tick 读会拿到旧值（设 390x844 读到 1100x2378），所以 `cdp-emulate-mobile.ts` 改成轮询等重排；它同时会报 `clientWidth` / `screen` / `visualViewport` / `dpr` / `matchMedia` 五项，不一致直接报错退出。
 
+## 选择器失效体检（站点改版后先跑这个）
+
+B 站改版会让脚本的选择器**静默失效**（顶栏、播放器控制栏、消息页都发生过，CSS 不生效没有任何报错）。跑这个把「哪里失效了」直接列出来：
+
+```bash
+bun scripts/dev/audit-selectors.ts                             # 默认 5 个页面 × 2 个视口
+bun scripts/dev/audit-selectors.ts --pages all                 # 连空间页子路由一起跑（慢）
+bun scripts/dev/audit-selectors.ts --extra "名字=url|probe"     # 临时加任意页面
+bun scripts/dev/audit-selectors.ts --viewports mobile --wait 12000
+```
+
+- **判据**：一条选择器只有在**所有已审计的（页面 × 视口）组合**里都 0 命中才算候选失效 —— 单页 0 命中往往正常（页面专属选择器在别的页面本来就不存在），别只看一页下结论。
+- **输出分三档**，只有第一档能直接下手：
+  - `✗ 失效` —— 所有组合 0 命中，且选择器本身不含状态标记/伪元素
+  - `△ 状态相关` —— 含 `[show]` / `.active` / `:hover` 等，只在瞬时状态命中 → 工具判不了，得去看代码里谁给它加属性/类
+  - `◇ 伪元素` —— `::before/::after`，`querySelectorAll` 本身匹配不到（已改按宿主元素测，宿主也 0 命中才列）
+- 结果**按源码文件**（`src/style/*.css`）归因分组，便于判断「这一堆是不是同一个功能的」。
+- 退出码：发现 `✗ 失效` 时为 1，可直接接进检查流程。
+- **WARNING** 只审计脚本自己注入的样式表；**只在设置里打开后才会注入的预设样式**（`setting.ts` 的 `css1..css11`）不在范围。
+- **WARNING** 未纳入 `--pages` 的页面（尤其空间页子路由）其专属选择器会被误报 —— 输出末尾会列出「已知但本次未审计」的页面。空间页路由实测：`/2/video` 会 302 到 `/2/upload/video`；`/2/favlist` 与 `/2/follows` 都 302 回 `/2`（已不存在，故不内置，需要时用 `--extra`）。
 ## CDP 调试脚本（scripts/cdp/，9222 端口直连）
 
 | 命令 | 用途 |
