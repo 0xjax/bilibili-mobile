@@ -303,7 +303,41 @@ for (const page of pages) {
       await send('Emulation.setTouchEmulationEnabled', { enabled: false })
     }
     await send('Page.navigate', { url: page.url })
-    await sleep(WAIT)
+
+    // 冷加载期间多次采样：有些元素只在头一两秒存在（弹幕行的预加载灰块、首页骨架屏…），
+    // 等页面稳定后再采一次会把它们判成「失效」—— 我在这上面误判过两次，所以这里必须采样。
+    interface Sample {
+      sel: string
+      n: number
+      media: string | null
+      pseudo: boolean
+    }
+    const samples: Sample[] = []
+    let sheetInfoLocal: string[] = []
+    let skippedLocal = 0
+    let elapsed = 0
+    let got = false
+    for (const at of [600, 1500, 3000, WAIT]) {
+      if (at > elapsed) {
+        await sleep(at - elapsed)
+        elapsed = at
+      }
+      const r = await send('Runtime.evaluate', {
+        expression: COLLECT,
+        returnByValue: true,
+        awaitPromise: true,
+      })
+      if (!r.result?.value) continue
+      got = true
+      const d = JSON.parse(r.result.value) as {
+        sheetInfo: string[]
+        skipped: number
+        rows: Sample[]
+      }
+      sheetInfoLocal = d.sheetInfo
+      skippedLocal = d.skipped
+      samples.push(...d.rows)
+    }
 
     const probeOk = (
       await send('Runtime.evaluate', {
@@ -315,26 +349,13 @@ for (const page of pages) {
       pageValidity.push(`${page.name}/${vp.name} ✗ 未加载成功（probe ${page.probe} 未命中）→ 不计入判据`)
       continue
     }
-
-    const raw = (
-      await send('Runtime.evaluate', {
-        expression: COLLECT,
-        returnByValue: true,
-        awaitPromise: true,
-      })
-    ).result?.value
-    if (!raw) {
+    if (!got) {
       pageValidity.push(`${page.name}/${vp.name} ✗ 收集失败`)
       continue
     }
-    const data = JSON.parse(raw) as {
-      sheetInfo: string[]
-      skipped: number
-      rows: { sel: string; n: number; media: string | null; pseudo: boolean }[]
-    }
-    sheetInfo = data.sheetInfo
-    skipped = data.skipped
-    for (const row of data.rows) {
+    sheetInfo = sheetInfoLocal
+    skipped = skippedLocal
+    for (const row of samples) {
       const key = `${row.media ?? ''}||${row.sel}`
       const prev = agg.get(key)
       const untestable = row.n === -3
