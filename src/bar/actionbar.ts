@@ -66,6 +66,10 @@ export function handleActionbar(type: string): void {
       setTopBtn()
       setShowMoreBtn()
       break
+    case 'history':
+      // 历史页只用底栏默认那组（主页/搜索/菜单），外加返回顶部
+      setTopBtn()
+      break
     case 'message':
       setSidebarBtn(type)
       break

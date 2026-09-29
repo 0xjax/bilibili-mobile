@@ -1,0 +1,63 @@
+/* -------------------- 历史记录页 (/history) ---------------------- */
+
+/*
+ * 站点这页是**写死宽度的桌面布局**，实测（390 移动视口）：
+ *   `html`/`body` 是 390px，但 `.main-content` 有 `min-width: 1012px`、`.history-record` 有
+ *   `min-width: fit-content` → 整个页面横向溢出到 1012px，屏幕上只能看到左边约 40%，
+ *   第一张卡片（x=162）直接被右边缘切掉。另外 `.main-content` 的 `padding: 0 50px 0 90px`
+ *   里那 90px 是给左侧日期轴留的。
+ * 所以顺序很重要：**先解开宽度锁**，再谈卡片列数 —— 否则把卡片改宽只会让溢出更严重。
+ * NOTE 页脚 `#biliMainFooter` 站点自己已是 display:none，不用管。
+ */
+
+/* 解开宽度锁：让内容跟着视口走 */
+.history-record,
+.history-record .main-content {
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+/* 收回日期轴占的横向空间（站点的内边距写死在 .main-content 上） */
+.history-record .main-content {
+    padding: 0 8px !important;
+}
+
+.history-record .history-timeline,
+.history-record .timeline-item {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 面包屑对移动端没用，还占 98px 的 sticky 高度 */
+.main-breadcrumbs {
+    display: none !important;
+}
+
+/* 卡片两列（站点默认 3 列，每张 256px，在手机上太窄） */
+.history-record .section-cards {
+    width: 100% !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    /* 站点行间距 48px，两列布局下太散 */
+    row-gap: 16px !important;
+}
+
+.history-record .history-card {
+    width: auto !important;
+}
+
+/*
+ * 站点顶栏是 fixed、宽 1012（内部 `.bili-header__menu` 甚至 1100），会把文档撑出横向滚动条；
+ * 它本身已被脚本移到屏幕外，这里把溢出裁掉即可。
+ * 用 `clip` 而不是 `hidden`：前者不产生滚动容器，不会影响站点自己的 sticky/fixed。
+ * 用 `:has()` 限定在历史页，避免影响其它页面（所有 CSS 文件都是全站注入的）。
+ */
+html:has(.history-record),
+body:has(.history-record) {
+    overflow-x: clip !important;
+}
+
+/* 底部给悬浮底栏留位 */
+.history-record {
+    padding-bottom: var(--actionbar-height) !important;
+}

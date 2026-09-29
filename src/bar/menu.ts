@@ -37,7 +37,7 @@ export function setMenuBtn() {
     message: 'a.right-entry__item-trigger[href="//message.bilibili.com"]',
     dynamic: 'a.right-entry__item-trigger[href="//t.bilibili.com/"]',
     fav: 'a.right-entry__item-trigger[data-header-fav-entry]',
-    history: 'a.right-entry__item-trigger[href="//www.bilibili.com/history"]',
+    history: '[data-idx=history]', // 脚本自己造的弹窗（站点已撤掉顶栏历史弹层）
     home: 'a.header-entry-avatar',
     follow: '[data-idx=follow]', // 脚本自己造的弹窗
   }
@@ -45,7 +45,6 @@ export function setMenuBtn() {
     message: '.right-entry__outside[href="//message.bilibili.com"]',
     dynamic: '.right-entry__outside[href="//t.bilibili.com/"]',
     fav: '.right-entry__outside[data-header-fav-entry]',
-    history: '.right-entry__outside[href="//www.bilibili.com/history"]',
   }
   function resolveRefer(token: string): string | undefined {
     return (isOldApp ? oldAppReferMap[token] : undefined) ?? referMap[token]
@@ -301,7 +300,7 @@ export function setMenuBtn() {
       id: 'follow-list-dialog',
       // /* html */
       innerHTML: `
-        <div class="v-popover-content"><div class="history-panel-popover">
+        <div class="v-popover-content"><div class="follow-list-panel">
           <div class="header-tabs-panel">
             <div class="header-tabs-panel__item--active header-tabs-panel__item">最常访问</div>
             <div class="header-tabs-panel__item">最近添加</div>
@@ -313,5 +312,29 @@ export function setMenuBtn() {
     falseHeader.appendChild(followDialog)
 
     loadFollowList(1)
+
+    /*
+     * 历史面板（脚本自建）。
+     *
+     * 站点把顶栏的「历史」弹层撤掉了（历史现在并进了动态弹层的一个区块），原来寄生在那个弹层上的
+     * 历史列表/搜索整条链路随之失效 —— 而且 `handleHistoryShowMore()` 找不到容器会抛未处理的
+     * Promise 拒绝。这里自建一份，结构刻意与它依赖的选择器保持一致：
+     * `.history-panel-popover > .header-tabs-panel__content`。
+     */
+    const historyOutside = document.createElement('div')
+    historyOutside.className = 'right-entry__outside'
+    historyOutside.dataset.idx = 'history'
+    falseHeader.appendChild(historyOutside)
+
+    const historyDialog = Object.assign(document.createElement('div'), {
+      className: 'v-popover is-bottom',
+      id: 'history-list-dialog',
+      innerHTML: `
+        <div class="v-popover-content"><div class="history-panel-popover">
+          <div class="header-tabs-panel__content"></div>
+        </div></div>
+        `,
+    })
+    falseHeader.appendChild(historyDialog)
   }
 }
