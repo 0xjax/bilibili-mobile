@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 移动端
 // @namespace    https://github.com/jk278/bilibili-mobile
-// @version      5.4.6
+// @version      5.4.7
 // @author       jk278
 // @description  Safari打开电脑模式，其它浏览器关闭电脑模式修改网站UA，获取舒适的移动端体验。
 // @license      MIT
@@ -238,6 +238,7 @@
 		const messageContainer = document.querySelector("body>.container");
 		const sidebarOverlay = document.querySelector("#sidebar-overlay");
 		const sidebarFab = document.querySelector("#sidebar-fab");
+		if (!messageContainer || !sidebarOverlay || !sidebarFab) return;
 		function show() {
 			messageContainer.setAttribute("sidebar", "");
 			sidebarOverlay.classList.add("show");
@@ -3061,6 +3062,8 @@ div.bili-dyn-item-draw__avatar {
 		window.addEventListener("resize", renewEndingScale);
 	}
 	function createUnfoldBtn() {
+		const messageContainer = document.querySelector("body>.container");
+		if (!messageContainer) return;
 		const observer = new MutationObserver((mutations) => mutations.forEach((mutation) => {
 			const addedNode = mutation.addedNodes[0];
 			if (addedNode?.nodeType === Node.ELEMENT_NODE && addedNode.classList.contains("bili-im")) {
@@ -3068,7 +3071,6 @@ div.bili-dyn-item-draw__avatar {
 				observer.disconnect();
 			}
 		}));
-		const messageContainer = document.querySelector("body>.container");
 		observer.observe(messageContainer, {
 			childList: true,
 			subtree: true
@@ -3079,6 +3081,7 @@ div.bili-dyn-item-draw__avatar {
 				textContent: "展开"
 			});
 			const messageList = document.querySelector(".bili-im .left");
+			if (!messageList) return;
 			messageList.appendChild(unfoldBtn);
 			unfoldBtn.addEventListener("click", () => {
 				if (messageList.style.cssText === "") {
@@ -3122,21 +3125,28 @@ div.bili-dyn-item-draw__avatar {
 			return "unknow";
 		};
 		const type = firstSubdomain === "www" ? location.pathname === "/" ? "home" : getTypeFromPath(pathToTypeMap) : firstSubdomain;
+		function eachSafely(...steps) {
+			for (const step of steps) try {
+				step();
+			} catch (error) {
+				console.error("[bilibili-mobile]", error);
+			}
+		}
 		function handleCommonSettings(type) {
 			handleScriptPreSetting();
 			waitDOMContentLoaded(() => {
-				handleScriptSetting();
-				handleScroll(type);
-				setScriptHelp();
-				document.body.appendChild(Object.assign(document.createElement("div"), { id: "toast" }));
-				if ([
-					"home",
-					"video",
-					"list",
-					"search",
-					"space",
-					"message"
-				].includes(type)) handleActionbar(type);
+				eachSafely(() => {
+					document.body.appendChild(Object.assign(document.createElement("div"), { id: "toast" }));
+				}, () => {
+					if ([
+						"home",
+						"video",
+						"list",
+						"search",
+						"space",
+						"message"
+					].includes(type)) handleActionbar(type);
+				}, handleScriptSetting, () => handleScroll(type), setScriptHelp);
 			});
 		}
 		handleCommonSettings(type);

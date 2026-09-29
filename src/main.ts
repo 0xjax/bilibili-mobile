@@ -81,23 +81,47 @@ import { initShadowHook } from './utils/shadow.ts'
         : getTypeFromPath(pathToTypeMap)
       : firstSubdomain
 
+  /**
+   * 逐个执行，并把异常限制在单步之内。
+   *
+   * 一个功能初始化失败不该连带丢掉同一回调里后面的功能 —— 实测：消息页
+   * `slideMessageSidebar()` 因为站点改过标记抛 `TypeError`，把后面的 `#toast` 与
+   * `handleActionbar()` 一起跳过了，于是那个页面既没有站点顶栏（被脚本隐藏）也没有脚本底栏。
+   */
+  function eachSafely(...steps: Array<() => void>) {
+    for (const step of steps) {
+      try {
+        step()
+      } catch (error) {
+        console.error('[bilibili-mobile]', error)
+      }
+    }
+  }
+
   function handleCommonSettings(type: string) {
     handleScriptPreSetting()
     waitDOMContentLoaded(() => {
-      handleScriptSetting()
-      handleScroll(type)
-      setScriptHelp()
-
-      document.body.appendChild(
-        Object.assign(document.createElement('div'), { id: 'toast' }),
+      // 顺序有讲究：先把脚本自己的 UI 建起来，再初始化依赖站点标记的功能
+      eachSafely(
+        () => {
+          document.body.appendChild(
+            Object.assign(document.createElement('div'), { id: 'toast' }),
+          )
+        },
+        () => {
+          // 悬浮底栏只在有专属按钮布局的页面注入
+          if (
+            ['home', 'video', 'list', 'search', 'space', 'message'].includes(
+              type,
+            )
+          ) {
+            handleActionbar(type)
+          }
+        },
+        handleScriptSetting,
+        () => handleScroll(type),
+        setScriptHelp,
       )
-
-      // 悬浮底栏只在有专属按钮布局的页面注入
-      if (
-        ['home', 'video', 'list', 'search', 'space', 'message'].includes(type)
-      ) {
-        handleActionbar(type)
-      }
     })
   }
   handleCommonSettings(type)
