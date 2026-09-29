@@ -6,6 +6,8 @@ B 站移动端优化油猴脚本，vite + vite-plugin-monkey 构建。
 
 - 包管理用 **bun**，NEVER npm/npx/pnpm
 - `bun run dev` / `build` / `lint`（oxlint）/ `typecheck`（tsc --noEmit）
+- 开发环境搭建与实测流程（调试 Chrome、装 dist 进 TM、CDP 脚本、移动端模拟）：[docs/dev-runbook.md](docs/dev-runbook.md)
+- 调试脚本在 `scripts/dev/`（装 dist、登录）与 `scripts/cdp/`（9222 端口直连）
 
 ## Conventions
 
