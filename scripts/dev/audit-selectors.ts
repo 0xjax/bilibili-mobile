@@ -62,7 +62,13 @@ const ALL_PAGES: PageCfg[] = [
     url: 'https://message.bilibili.com/',
     probe: '.message-layout',
   },
-  // 消息页是 hash 路由 SPA：这几个 tab 的标记与「私信」不同，message.css 大量规则属于它们
+  // 搜索页各 tab 也是 SPA 路由（URL 由点击 tab 实测得到），search.css 大量规则属于它们
+  { name: 'search-video', url: 'https://search.bilibili.com/video?keyword=bilibili', probe: '.search-page-video', optIn: true },
+  { name: 'search-bangumi', url: 'https://search.bilibili.com/bangumi?keyword=bilibili', probe: '.search-page-bangumi', optIn: true },
+  { name: 'search-pgc', url: 'https://search.bilibili.com/pgc?keyword=bilibili', probe: '.search-page-pgc', optIn: true },
+  { name: 'search-live', url: 'https://search.bilibili.com/live?keyword=bilibili', probe: '.search-page-live', optIn: true },
+  { name: 'search-article', url: 'https://search.bilibili.com/article?keyword=bilibili', probe: '.search-page-article', optIn: true },
+  { name: 'search-upuser', url: 'https://search.bilibili.com/upuser?keyword=bilibili', probe: '.search-page-upuser', optIn: true },  // 消息页是 hash 路由 SPA：这几个 tab 的标记与「私信」不同，message.css 大量规则属于它们
   { name: 'message-reply', url: 'https://message.bilibili.com/#/reply', probe: '.message-layout', optIn: true },
   { name: 'message-at', url: 'https://message.bilibili.com/#/at', probe: '.message-layout', optIn: true },
   { name: 'message-like', url: 'https://message.bilibili.com/#/like', probe: '.message-layout', optIn: true },
@@ -146,7 +152,9 @@ const attribute = (sel: string) => {
   if (chunks.length > 1) candidates.push(norm(chunks[chunks.length - 1]))
   for (const c of candidates) {
     if (c.length < 3) continue
-    for (const sf of sourceFiles) if (sf.text.includes(c)) return sf.file
+    // 子串匹配会误判（`.show-more` 会命中 `.show-more-text` 所在的文件）——要求匹配之后不是标识符字符
+    const re = new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w-])')
+    for (const sf of sourceFiles) if (re.test(sf.text)) return sf.file
   }
   return '(未归属)'
 }
