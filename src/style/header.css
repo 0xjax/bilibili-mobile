@@ -1,11 +1,19 @@
 /* ------------------------ 顶栏 -------------------- */
 
-/* #i_cecream 属首页(含顶栏)和搜索页(不含顶栏)，#app #biliMainHeader 属视频页，#home_nav 属消息页 */
+/*
+ * 顶栏外框 —— B 站改过 id/类名，选择器得跟着改（旧名保留兜底）：
+ *   首页    无外框 id，靠 .bili-header--large（旧 .large-header）
+ *   视频页  #biliMainHeader > .bili-header.bili-header--mini.bili-header--fixed
+ *   搜索页  #bili-header-container > .bili-header--mini
+ *   消息页  header#message-pc-header（旧 #home_nav）> .bili-header--fixed
+ *   空间页  header#biliMainHeader > .bili-header--transparent
+ */
 
 /* 顶栏外框: translate 会生成新的堆叠上下文，导致 position:fixed 的消息数不可显示 */
 #biliMainHeader,
 #bili-header-container,
-#home_nav {
+#home_nav,
+header#message-pc-header {
     position: fixed;
     width: 100%;
     z-index: 62;
@@ -18,14 +26,16 @@
 }
 
 /* 首页顶栏偏移 */
-.large-header .bili-header__bar {
+.large-header .bili-header__bar,
+.bili-header--large .bili-header__bar {
     top: -64px !important;
     /* 首页顶栏防滚动(避免搜索页异常) */
     position: fixed !important;
 }
 
-/* 视频搜索页顶栏内容跟随外框移出屏幕 */
-.fixed-header .bili-header__bar {
+/* 顶栏内容跟随外框移出屏幕: 栏自身是 fixed 时不跟外框走，必须改成 absolute */
+.fixed-header .bili-header__bar,
+.bili-header--fixed .bili-header__bar {
     position: absolute !important;
 }
 
