@@ -15,12 +15,41 @@ export function setMenuBtn() {
     '.header-avatar-wrap',
   ]
   const preloadeditems2 = [
-    '.v-popover-wrap:has(>[data-idx=message])',
-    '.v-popover-wrap:has(>[data-idx=dynamic])',
-    '.v-popover-wrap:has(>[data-idx=fav])',
-    '.v-popover-wrap:has(>[data-idx=history])',
+    // NOTE 站点改过顶栏结构：入口现在是 `a.right-entry__item-trigger[href=…]`，
+    // 弹层是它的下一个兄弟 `.v-popover`（旧版是 `.right-entry__outside[href=…]`）
+    '.v-popover-wrap:has(>a.right-entry__item-trigger[href="//message.bilibili.com"])',
+    '.v-popover-wrap:has(>a.right-entry__item-trigger[href="//t.bilibili.com/"])',
+    '.v-popover-wrap:has(>a.right-entry__item-trigger[data-header-fav-entry])',
+    '.v-popover-wrap:has(>a.right-entry__item-trigger[href="//www.bilibili.com/history"])',
     '.header-avatar-wrap',
   ]
+
+  /*
+   * 菜单项 → 站点顶栏入口选择器。
+   *
+   * 脚本菜单靠「入口 + 它的 `.v-popover`」去开站点自己的弹层，所以入口选择器一失效，
+   * 点菜单项就只会弹「网页菜单加载中，请稍后重试」。这里只存 token，选择器集中在下面两张表里
+   * —— 站点再改版只需要改这里（改的时候记得用 console 里 `querySelector(选择器+'+.v-popover')`
+   * 实测一遍）。
+   */
+  const referMap: Record<string, string> = {
+    category: '[data-idx=category]', // 脚本自己造的弹窗
+    message: 'a.right-entry__item-trigger[href="//message.bilibili.com"]',
+    dynamic: 'a.right-entry__item-trigger[href="//t.bilibili.com/"]',
+    fav: 'a.right-entry__item-trigger[data-header-fav-entry]',
+    history: 'a.right-entry__item-trigger[href="//www.bilibili.com/history"]',
+    home: 'a.header-entry-avatar',
+    follow: '[data-idx=follow]', // 脚本自己造的弹窗
+  }
+  const oldAppReferMap: Record<string, string> = {
+    message: '.right-entry__outside[href="//message.bilibili.com"]',
+    dynamic: '.right-entry__outside[href="//t.bilibili.com/"]',
+    fav: '.right-entry__outside[data-header-fav-entry]',
+    history: '.right-entry__outside[href="//www.bilibili.com/history"]',
+  }
+  function resolveRefer(token: string): string | undefined {
+    return (isOldApp ? oldAppReferMap[token] : undefined) ?? referMap[token]
+  }
 
   function preload() {
     const preloadeditems = isOldApp ? preloadeditems1 : preloadeditems2
@@ -40,35 +69,7 @@ export function setMenuBtn() {
     ) {
       isOldApp = true
       preload()
-      changeMenu()
-      function changeMenu(retry = 40) {
-        if (document.querySelector('#header-in-menu')) {
-          ;(
-            document.querySelector(
-              '[data-refer="[data-idx=message]"]',
-            ) as HTMLElement
-          ).dataset.refer =
-            ".right-entry__outside[href='//message.bilibili.com']"
-          ;(
-            document.querySelector(
-              '[data-refer="[data-idx=dynamic]"]',
-            ) as HTMLElement
-          ).dataset.refer = ".right-entry__outside[href='//t.bilibili.com/']"
-          ;(
-            document.querySelector(
-              '[data-refer="[data-idx=fav]"]',
-            ) as HTMLElement
-          ).dataset.refer = '.right-entry__outside[data-header-fav-entry]'
-          ;(
-            document.querySelector(
-              '[data-refer="[data-idx=history]"]',
-            ) as HTMLElement
-          ).dataset.refer =
-            ".right-entry__outside[href='//www.bilibili.com/history']"
-        } else if (retry > 0) {
-          setTimeout(() => changeMenu(retry - 1), 50)
-        }
-      }
+      // 旧版 APP 的入口值由 oldAppReferMap 处理，不再需要改写 DOM 上的 data-refer
     } else if (
       document.querySelector(preloadeditems2[0]) && // 排除登录、主页
       document.querySelector(preloadeditems2[1]) &&
@@ -88,17 +89,18 @@ export function setMenuBtn() {
   const menuOverlay = Object.assign(document.createElement('div'), {
     id: 'menu-overlay',
     // 顺序要与 setting.js 中的菜单选项排序对应
+    // data-refer 只存 token，真正的选择器看上面的 referMap
     innerHTML: `
     <div id="header-in-menu">
       <ul>
         <li><a target="_blank" href="https://www.bilibili.com/v/popular/all/">热门</a></li>
-        <li data-refer="[data-idx=category]">分类</li>
-        <li data-refer="[data-idx=message]">消息<span class="badge" id="message-badge"></span></li>
-        <li data-refer="[data-idx=dynamic]">动态<span class="badge" id="dynamic-badge"></span></li>
-        <li data-refer="[data-idx=fav]">收藏</li>
-        <li data-refer="[data-idx=history]">历史</li>
-        <li data-refer=".header-avatar-wrap--container">主页</li>
-        <li data-refer="[data-idx=follow]">关注</li>
+        <li data-refer="category">分类</li>
+        <li data-refer="message">消息<span class="badge" id="message-badge"></span></li>
+        <li data-refer="dynamic">动态<span class="badge" id="dynamic-badge"></span></li>
+        <li data-refer="fav">收藏</li>
+        <li data-refer="history">历史</li>
+        <li data-refer="home">主页</li>
+        <li data-refer="follow">关注</li>
       </ul>
     </div>
     `,
@@ -137,16 +139,30 @@ export function setMenuBtn() {
       event.stopPropagation()
       menu.classList.remove('show')
 
-      const refer = item.dataset.refer
+      const token = item.dataset.refer
 
-      if (!refer) {
+      if (!token) {
         // 热门
         menuOverlay.classList.remove('show')
         return
       }
 
-      const referElement = document.querySelector(`${refer}+.v-popover`)
+      const refer = resolveRefer(token)
+      const referElement = refer
+        ? document.querySelector(`${refer}+.v-popover`)
+        : null
       if (!referElement) {
+        // 弹层没建出来（站点没提供，或还在加载）。站点的入口本身就是链接 —— 直接跳过去，
+        // 别把用户堵在一句「请稍后重试」上（历史/主页现在就没有自己的弹层）
+        const link = (refer
+          ? document.querySelector(refer)
+          : null) as HTMLAnchorElement | null
+        if (link?.href) {
+          menuOverlay.classList.remove('show')
+          location.href = link.href
+          return
+        }
+
         const toast = document.querySelector('#toast') as HTMLElement
         toast.textContent = '网页菜单加载中，请稍后重试'
         toast.style.display = 'block'
@@ -170,7 +186,7 @@ export function setMenuBtn() {
         return
       }
 
-      openedDialog = refer
+      openedDialog = token
 
       referElement.setAttribute('display', '')
       setTimeout(() => {
@@ -189,20 +205,18 @@ export function setMenuBtn() {
       return
     }
 
-    const referElement = document.querySelector(
-      `${openedDialog}+.v-popover`,
-    ) as HTMLElement
+    const refer = resolveRefer(openedDialog)
+    const referElement = (refer
+      ? document.querySelector(`${refer}+.v-popover`)
+      : null) as HTMLElement | null
+    if (!referElement) return
     referElement.removeAttribute('show')
 
     handleTransitionEndOnce(referElement, 'opacity', () => {
       referElement.removeAttribute('display')
     })
 
-    if (
-      openedDialog ===
-        ".right-entry__outside[href='//message.bilibili.com']" ||
-      openedDialog === ".right-entry__outside[href='//t.bilibili.com/']"
-    ) {
+    if (openedDialog === 'message' || openedDialog === 'dynamic') {
       updateBadges()
     }
   })
