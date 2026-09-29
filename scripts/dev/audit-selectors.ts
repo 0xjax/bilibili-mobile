@@ -180,11 +180,30 @@ const COLLECT = `(() => {
     }
     return { prefix: parts.join(' '), media }
   }
+  // 按顶层逗号切分：split(',') 会把 :has(a, b) / :is(a, b) / :not(a, b) 里的逗号也切断，
+  // 产出非法片段（曾把 .floor-single-card:has(.skeleton, .skeleton-item) 切成两半）
+  const splitSelectors = (s) => {
+    const out = []
+    let depth = 0
+    let cur = ''
+    for (const ch of s) {
+      if (ch === '(' || ch === '[') depth++
+      else if (ch === ')' || ch === ']') depth--
+      if (ch === ',' && depth === 0) {
+        out.push(cur)
+        cur = ''
+        continue
+      }
+      cur += ch
+    }
+    out.push(cur)
+    return out.map((x) => x.trim()).filter(Boolean)
+  }
   const walk = (list) => {
     for (const r of Array.from(list)) {
       if (r.selectorText) {
         const { prefix, media } = compose(r)
-        for (const one of r.selectorText.split(',').map((s) => s.trim()).filter(Boolean)) {
+        for (const one of splitSelectors(r.selectorText)) {
           const sel = prefix ? prefix + ' ' + one : one
           // 伪元素 querySelectorAll 匹配不到，按宿主元素测
           const pe = sel.match(/::[a-zA-Z-]+(\\([^)]*\\))?\\s*$/)

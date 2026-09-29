@@ -92,6 +92,26 @@ bun scripts/dev/audit-selectors.ts --viewports mobile --wait 12000
 - 退出码：发现 `✗ 失效` 时为 1，可直接接进检查流程。
 - **WARNING** 只审计脚本自己注入的样式表；**只在设置里打开后才会注入的预设样式**（`setting.ts` 的 `css1..css11`）不在范围。
 - **WARNING** 未纳入 `--pages` 的页面（尤其空间页子路由）其专属选择器会被误报 —— 输出末尾会列出「已知但本次未审计」的页面。空间页路由实测：`/2/video` 会 302 到 `/2/upload/video`；`/2/favlist` 与 `/2/follows` 都 302 回 `/2`（已不存在，故不内置，需要时用 `--extra`）。
+### `△ 状态相关` 那一档怎么判（已核实清单）
+
+工具判不了这类规则，只能人看「谁给它加属性/类」。已完整过过一遍，结论如下。
+
+**脚本自己设的 —— 按构造即合法，不用查**：`[scroll-hidden]`（handleScroll）、`[sidebar]`（视频/消息侧边栏）、
+`[touch-active]`、`#toast[show]`、`.setting-panel[show]`、`[unfold]`（会话列表）、
+`.bpx-player-container[ctrl-shown]`
+
+**站点设的瞬时状态 —— 已实测确实会出现，别因为一两个页面看不到就删**：
+
+| 选择器 | 触发条件 | 怎么验 |
+|---|---|---|
+| `.back-to-top[show]` | 页面往下滚之后 | 滚到 2500px 再看它的属性 |
+| `#v_desc .toggle-btn`、`.basic-desc-info[style="height: 84px;"]` | **简介较长的视频**（短简介视频上压根没有折叠控件） | 找文本长度 >100 的视频：折叠时 inline style 是 `height: 84px;`，脚本把它压到 70px |
+| `.floor-single-card:has(.skeleton, .skeleton-item)` | 首页骨架屏加载时 | 冷启动瞬间 |
+| `.video-info-detail-list:has(.honor.item)` | 视频带荣誉/争议信息 | 换个视频看 |
+| `.bpx-player-ending-*`、`[data-screen=web/mini]`、`.bpx-player-ending-wrap[hidden]` | 播放结束 / 网页全屏 / 小窗 | **需要模拟播放结束与播放器状态，尚未核实**（见"待办"） |
+
+**教训**：`.basic-desc-info[style="height: 84px;"]` 一开始被我判成"疑似已死"，实测是活的 ——
+短简介视频上根本不会出现这个状态。只测一两个页面就下结论，会误删还在生效的规则。
 ## CDP 调试脚本（scripts/cdp/，9222 端口直连）
 
 | 命令 | 用途 |
