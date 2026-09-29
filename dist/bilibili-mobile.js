@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 移动端
 // @namespace    https://github.com/jk278/bilibili-mobile
-// @version      5.4.9
+// @version      5.4.10
 // @author       jk278
 // @description  Safari打开电脑模式，其它浏览器关闭电脑模式修改网站UA，获取舒适的移动端体验。
 // @license      MIT
@@ -1865,12 +1865,30 @@ div.bili-live-card__info {
 			".header-avatar-wrap"
 		];
 		const preloadeditems2 = [
-			".v-popover-wrap:has(>[data-idx=message])",
-			".v-popover-wrap:has(>[data-idx=dynamic])",
-			".v-popover-wrap:has(>[data-idx=fav])",
-			".v-popover-wrap:has(>[data-idx=history])",
+			".v-popover-wrap:has(>a.right-entry__item-trigger[href=\"//message.bilibili.com\"])",
+			".v-popover-wrap:has(>a.right-entry__item-trigger[href=\"//t.bilibili.com/\"])",
+			".v-popover-wrap:has(>a.right-entry__item-trigger[data-header-fav-entry])",
+			".v-popover-wrap:has(>a.right-entry__item-trigger[href=\"//www.bilibili.com/history\"])",
 			".header-avatar-wrap"
 		];
+		const referMap = {
+			category: "[data-idx=category]",
+			message: "a.right-entry__item-trigger[href=\"//message.bilibili.com\"]",
+			dynamic: "a.right-entry__item-trigger[href=\"//t.bilibili.com/\"]",
+			fav: "a.right-entry__item-trigger[data-header-fav-entry]",
+			history: "a.right-entry__item-trigger[href=\"//www.bilibili.com/history\"]",
+			home: "a.header-entry-avatar",
+			follow: "[data-idx=follow]"
+		};
+		const oldAppReferMap = {
+			message: ".right-entry__outside[href=\"//message.bilibili.com\"]",
+			dynamic: ".right-entry__outside[href=\"//t.bilibili.com/\"]",
+			fav: ".right-entry__outside[data-header-fav-entry]",
+			history: ".right-entry__outside[href=\"//www.bilibili.com/history\"]"
+		};
+		function resolveRefer(token) {
+			return (isOldApp ? oldAppReferMap[token] : void 0) ?? referMap[token];
+		}
 		function preload() {
 			(isOldApp ? preloadeditems1 : preloadeditems2).forEach((item) => {
 				document.querySelector(item)?.dispatchEvent(new MouseEvent("mouseenter"));
@@ -1883,15 +1901,6 @@ div.bili-live-card__info {
 			if (document.querySelector(preloadeditems1[0]) && document.querySelector(preloadeditems1[1]) && document.querySelector(preloadeditems1[2])) {
 				isOldApp = true;
 				preload();
-				changeMenu();
-				function changeMenu(retry = 40) {
-					if (document.querySelector("#header-in-menu")) {
-						document.querySelector("[data-refer=\"[data-idx=message]\"]").dataset.refer = ".right-entry__outside[href='//message.bilibili.com']";
-						document.querySelector("[data-refer=\"[data-idx=dynamic]\"]").dataset.refer = ".right-entry__outside[href='//t.bilibili.com/']";
-						document.querySelector("[data-refer=\"[data-idx=fav]\"]").dataset.refer = ".right-entry__outside[data-header-fav-entry]";
-						document.querySelector("[data-refer=\"[data-idx=history]\"]").dataset.refer = ".right-entry__outside[href='//www.bilibili.com/history']";
-					} else if (retry > 0) setTimeout(() => changeMenu(retry - 1), 50);
-				}
 			} else if (document.querySelector(preloadeditems2[0]) && document.querySelector(preloadeditems2[1]) && document.querySelector(preloadeditems2[2]) && document.querySelector(preloadeditems2[3])) {
 				isOldApp = false;
 				preload();
@@ -1904,13 +1913,13 @@ div.bili-live-card__info {
     <div id="header-in-menu">
       <ul>
         <li><a target="_blank" href="https://www.bilibili.com/v/popular/all/">热门</a></li>
-        <li data-refer="[data-idx=category]">分类</li>
-        <li data-refer="[data-idx=message]">消息<span class="badge" id="message-badge"></span></li>
-        <li data-refer="[data-idx=dynamic]">动态<span class="badge" id="dynamic-badge"></span></li>
-        <li data-refer="[data-idx=fav]">收藏</li>
-        <li data-refer="[data-idx=history]">历史</li>
-        <li data-refer=".header-avatar-wrap--container">主页</li>
-        <li data-refer="[data-idx=follow]">关注</li>
+        <li data-refer="category">分类</li>
+        <li data-refer="message">消息<span class="badge" id="message-badge"></span></li>
+        <li data-refer="dynamic">动态<span class="badge" id="dynamic-badge"></span></li>
+        <li data-refer="fav">收藏</li>
+        <li data-refer="history">历史</li>
+        <li data-refer="home">主页</li>
+        <li data-refer="follow">关注</li>
       </ul>
     </div>
     `
@@ -1939,13 +1948,20 @@ div.bili-live-card__info {
 		menuOverlay.querySelectorAll("li").forEach((item) => item.addEventListener("click", (event) => {
 			event.stopPropagation();
 			menu.classList.remove("show");
-			const refer = item.dataset.refer;
-			if (!refer) {
+			const token = item.dataset.refer;
+			if (!token) {
 				menuOverlay.classList.remove("show");
 				return;
 			}
-			const referElement = document.querySelector(`${refer}+.v-popover`);
+			const refer = resolveRefer(token);
+			const referElement = refer ? document.querySelector(`${refer}+.v-popover`) : null;
 			if (!referElement) {
+				const link = refer ? document.querySelector(refer) : null;
+				if (link?.href) {
+					menuOverlay.classList.remove("show");
+					location.href = link.href;
+					return;
+				}
 				const toast = document.querySelector("#toast");
 				toast.textContent = "网页菜单加载中，请稍后重试";
 				toast.style.display = "block";
@@ -1961,7 +1977,7 @@ div.bili-live-card__info {
 				}, 3e3);
 				return;
 			}
-			openedDialog = refer;
+			openedDialog = token;
 			referElement.setAttribute("display", "");
 			setTimeout(() => {
 				referElement.setAttribute("show", "");
@@ -1973,12 +1989,14 @@ div.bili-live-card__info {
 			menuOverlay.classList.remove("show");
 			menuFab.classList.remove("active");
 			if (openedDialog === "") return;
-			const referElement = document.querySelector(`${openedDialog}+.v-popover`);
+			const refer = resolveRefer(openedDialog);
+			const referElement = refer ? document.querySelector(`${refer}+.v-popover`) : null;
+			if (!referElement) return;
 			referElement.removeAttribute("show");
 			handleTransitionEndOnce(referElement, "opacity", () => {
 				referElement.removeAttribute("display");
 			});
-			if (openedDialog === ".right-entry__outside[href='//message.bilibili.com']" || openedDialog === ".right-entry__outside[href='//t.bilibili.com/']") updateBadges();
+			if (openedDialog === "message" || openedDialog === "dynamic") updateBadges();
 		});
 		function handleTouchMove() {
 			menuOverlay.click();
