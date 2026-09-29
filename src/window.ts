@@ -243,9 +243,7 @@ function slideMessageSidebar() {
   // NOTE 这里沿用本文件既有的 `as HTMLElement` 写法（不改成 `| null`）：下面的 show/hide/
   // slideLeft/slideRight 是函数声明，TS 不会把 const 的收窄带进去，改类型只会引出一堆 TS18047。
   // 安全性由紧随其后的运行时检查保证。
-  const messageContainer = document.querySelector(
-    'body>.container',
-  ) as HTMLElement
+  const messageContainer = document.querySelector('#app') as HTMLElement
   const sidebarOverlay = document.querySelector(
     '#sidebar-overlay',
   ) as HTMLElement
