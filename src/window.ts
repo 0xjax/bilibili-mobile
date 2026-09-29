@@ -240,6 +240,9 @@ function slideSearchSort() {
  * 设置消息侧边栏的滑动事件
  */
 function slideMessageSidebar() {
+  // NOTE 这里沿用本文件既有的 `as HTMLElement` 写法（不改成 `| null`）：下面的 show/hide/
+  // slideLeft/slideRight 是函数声明，TS 不会把 const 的收窄带进去，改类型只会引出一堆 TS18047。
+  // 安全性由紧随其后的运行时检查保证。
   const messageContainer = document.querySelector(
     'body>.container',
   ) as HTMLElement
@@ -247,6 +250,11 @@ function slideMessageSidebar() {
     '#sidebar-overlay',
   ) as HTMLElement
   const sidebarFab = document.querySelector('#sidebar-fab') as HTMLElement
+
+  // 站点改过消息页标记：body 下现在是 header#message-pc-header + #app，没有 body>.container；
+  // #sidebar-overlay / #sidebar-fab 是脚本自己建的，底栏没建起来时也取不到。
+  // 缺任何一个就安静退出 —— 这里绝不能抛，否则会连带丢掉同一回调里后面的功能初始化。
+  if (!messageContainer || !sidebarOverlay || !sidebarFab) return
 
   function show() {
     messageContainer.setAttribute('sidebar', '')
