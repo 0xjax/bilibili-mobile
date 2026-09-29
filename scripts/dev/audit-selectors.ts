@@ -68,7 +68,9 @@ const ALL_PAGES: PageCfg[] = [
   { name: 'search-pgc', url: 'https://search.bilibili.com/pgc?keyword=bilibili', probe: '.search-page-pgc', optIn: true },
   { name: 'search-live', url: 'https://search.bilibili.com/live?keyword=bilibili', probe: '.search-page-live', optIn: true },
   { name: 'search-article', url: 'https://search.bilibili.com/article?keyword=bilibili', probe: '.search-page-article', optIn: true },
-  { name: 'search-upuser', url: 'https://search.bilibili.com/upuser?keyword=bilibili', probe: '.search-page-upuser', optIn: true },  // 消息页是 hash 路由 SPA：这几个 tab 的标记与「私信」不同，message.css 大量规则属于它们
+  { name: 'search-upuser', url: 'https://search.bilibili.com/upuser?keyword=bilibili', probe: '.search-page-upuser', optIn: true },  // 空间页子路由，URL 取自空间页导航实测（主页/动态/投稿/合集和系列/追番追剧）
+  { name: 'space-lists', url: 'https://space.bilibili.com/2/lists', probe: '.space-lists, .lists-content', optIn: true },
+  { name: 'space-bangumi', url: 'https://space.bilibili.com/2/bangumi', probe: '.bangumi-content', optIn: true },  // 消息页是 hash 路由 SPA：这几个 tab 的标记与「私信」不同，message.css 大量规则属于它们
   { name: 'message-reply', url: 'https://message.bilibili.com/#/reply', probe: '.message-layout', optIn: true },
   { name: 'message-at', url: 'https://message.bilibili.com/#/at', probe: '.message-layout', optIn: true },
   { name: 'message-like', url: 'https://message.bilibili.com/#/like', probe: '.message-layout', optIn: true },

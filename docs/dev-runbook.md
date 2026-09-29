@@ -122,7 +122,7 @@ bun scripts/dev/audit-selectors.ts --viewports mobile --wait 12000
 | `.basic-desc-info[style="height: 84px;"]`、`#v_desc .toggle-btn` | **简介较长的视频**（短简介根本没有折叠控件） | 找文本长度 >100 的视频 |
 | `.back-to-top[show]` | 页面往下滚之后 | 滚到 2500px |
 | `.bili-user-profile` | 悬浮 UP 头像时**按需创建**（常驻的是 `.usercard-wrap`） | 悬浮头像 |
-| `.multi-page-v1 .cur-list`、`.cur-list ul.list-box/module-box …`、`.base-video-sections-v1 a.first-line-title`、`.playlist-container--left/right`、`.video-title-href`、`.show-more` | **多 P / 合集 / `/list` 页** | **尚未纳入审计覆盖**（还没找到有效的合集页 URL） |
+| `.multi-page-v1 .cur-list`、`.cur-list ul.list-box/module-box …`、`.base-video-sections-v1 a.first-line-title`、`.playlist-container--left/right`、`.video-title-href`、`.show-more` | **多 P / 合集 / `/list` 页** | **旧的 `/list/<id>` 播放列表页已不存在**：合集详情的真实地址是 `space.bilibili.com/<uid>/channel/collectiondetail?sid=<id>`，且会 302 到 `/<uid>/lists?sid=<id>`；视频页的合集 UI 现为 `.video-pod` + 播放器 `.bpx-player-ctrl-eplist-*`。这几条选择器的目标标记在上述页面上**实测都不存在**（分 P 视频未单独验证） |
 
 **教训（同一类误判我犯了三次）**：`.basic-desc-info[style="height: 84px;"]`、`.bpx-player-sending-bar-left/right`、
 `.bpx-player-ending-functions-*` 我先后判成「已死」，实测**全都是活的** —— 它们分别只在「长简介」
