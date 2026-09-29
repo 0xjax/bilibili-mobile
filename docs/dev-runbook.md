@@ -24,7 +24,7 @@
 
 3. **登录 B 站**：暗色主题、个性化等状态**登录后才存在**，未登录时页面上根本没有夜间模式入口和主题样式。两种方式：
    - 手动在调试窗口登录一次（**最简单**）：登录态存在 `D:\chrome-debug-profile` 里，不是每次冷启动都要重来。
-   - `bun scripts/dev/login-debug-chrome.ts`：读仓库根 `.env`（`BILI_USER` / `BILI_PASS`）填表提交。**CRITICAL B 站密码登录有图片验证码（还可能叠加 geetest 风控），无法无人值守**——脚本填完账号密码会停下来等你手动输验证码，检测到填够位数后自动点「登录」，再轮询 `DedeUserID` cookie 确认。
+   - `bun scripts/dev/login-debug-chrome.ts`：**凭据由 `bun` 自动加载**仓库根 `.env`（`BILI_USER` / `BILI_PASS`），脚本自己不读文件；按 AGENTS.md「Secrets」全程 **0 暴露** —— 凭据只作为 CDP 参数经 `Input.insertText` 走真实输入管线送进页面，只用「长度是否一致」校验，从不读回、从不打印。**CRITICAL B 站密码登录有图片验证码（还可能叠加 geetest 风控），无法无人值守**——脚本填完账号密码会停下来等你手动输验证码，检测到填够位数后自动点「登录」，再轮询 `DedeUserID` cookie 确认。
 
 ## 日常启动
 

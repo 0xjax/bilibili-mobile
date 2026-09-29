@@ -20,8 +20,15 @@ B 站移动端优化油猴脚本，vite + vite-plugin-monkey 构建。
 
 ## Secrets
 
-- **MUST NOT** read `.env`, `.env.*`, or any secrets file
+移植自 ink 同名段落，并按本仓库的落地方式标注边界：
+
+- **MUST NOT** read `.env`, `.env.*`, or any secrets file —— 指 agent 自己去读/去翻
 - **MUST NOT** expose secrets in logs, comments, commits, PR 描述, or tool output
 - **MUST NOT** put secrets in command arguments
 - When env var values are needed, ask the user to provide them directly
-- 开发环境验证：NEVER 用账号密码自行登录；需要登录态时由用户在调试窗口手动登录一次（登录态留在调试 profile 里）
+- 边界（关键区别）：**脚本可以加载并程序化使用凭据**——`bun` 会自动加载 `.env`，脚本只把凭据当普通变量用；
+  唯一红线是**凭据值不得进入 agent 的可见输出**。即「可程序化使用，但 agent 不得读取与暴露」。
+  - 具体做法：凭据只作为 CDP 参数 / 请求体传输，NEVER 拼进 `Runtime.evaluate` 的表达式字符串
+    （表达式一旦抛错会连同内容回显进异常；用 `Input.insertText` 走真实输入管线）
+  - NEVER 打印凭据（连长度之外的信息也别打）、NEVER 放进命令行参数
+  - 参考实现：`scripts/dev/login-debug-chrome.ts`（全程 0 暴露）

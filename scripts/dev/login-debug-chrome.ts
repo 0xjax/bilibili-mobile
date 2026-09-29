@@ -1,33 +1,26 @@
-// 调试 Chrome 登录 B 站：从仓库根 .env 读 BILI_USER / BILI_PASS，已登录则跳过。
-// .env 在 .gitignore，凭据不进仓库；新设备按 .env.example 说明复制创建。
+// 调试 Chrome 登录 B 站。凭据来源：仓库根 .env（bun 自动加载）。
 //
-// CRITICAL B 站密码登录**有图片验证码**（还可能叠加 geetest 风控），无法无人值守自动登录。
-// 本脚本的定位是「把剩下的活干完」：
-//   打开登录页 → 填账号密码 → 然后**停下来等你手动输入图片验证码** → 检测到验证码填够位数就自动点「登录」
-//   → 轮询登录态（DedeUserID cookie）直到成功或超时。
-// 你也可以完全不跑这个脚本，直接手动在调试窗口登录一次：登录态存在调试 profile 里，
-// 不是每次冷启动都要重来（这点和 TM 的「允许运行用户脚本」开关不一样）。
+// CRITICAL 全程「0 暴露」（约束见 AGENTS.md「Secrets」）：
+//   - 本脚本**不自己读 .env 文件**，靠 bun 自动加载到 process.env
+//   - NEVER 打印凭据（连长度以外的信息都不打）、NEVER 放进命令行参数
+//   - NEVER 把凭据拼进 Runtime.evaluate 的表达式字符串 —— 表达式一旦抛错，
+//     内容会随异常回显出来。凭据只作为 CDP 参数走 Input.insertText 真实输入管线
+//   - 填完只用「长度是否一致」校验，不读回值
+//
+// WARNING B 站密码登录有图片验证码（还可能叠加 geetest 风控），无法无人值守：
+//   本脚本填完账号密码后会停下，等你手动输入图片验证码；检测到验证码填够位数就自动点
+//   「登录」，再轮询 DedeUserID cookie 确认。也可以完全不跑本脚本，直接在调试窗口
+//   手动登录一次（登录态存在调试 profile 里，不用每次重来）。
 //
 // 用法：bun scripts/dev/login-debug-chrome.ts [tab url 包含子串，默认 bilibili]
 const [, , urlPart = 'bilibili'] = process.argv
 
-// bun 自动加载 .env（bunfig 无需配置）；再兜底手动解析一次
-if (!process.env.BILI_USER || !process.env.BILI_PASS) {
-  try {
-    const envFile = await Bun.file('.env').text()
-    for (const line of envFile.split('\n')) {
-      const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.+?)\s*$/)
-      if (m && !(m[1] in process.env)) process.env[m[1]] = m[2]
-    }
-  } catch {
-    // 无 .env，跳过登录
-  }
-}
-
 const USER = process.env.BILI_USER
 const PASS = process.env.BILI_PASS
 if (!USER || !PASS) {
-  console.log('SKIP: 仓库根无 .env（参考 .env.example 创建；已登录则无需创建）')
+  console.log(
+    'SKIP: 环境里没有 BILI_USER / BILI_PASS（复制 .env.example 为 .env 并填入；已登录则无需创建）',
+  )
   process.exit(0)
 }
 
@@ -60,20 +53,47 @@ function send(method: string, params?: unknown): Promise<any> {
   })
 }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
-const evalJs = async (expression: string) => {
+async function evalJs(expression: string) {
   const r = await send('Runtime.evaluate', {
     expression,
     returnByValue: true,
     awaitPromise: true,
   })
-  if (r.exceptionDetails)
-    console.error('EX:', JSON.stringify(r.exceptionDetails).slice(0, 400))
+  if (r.exceptionDetails) {
+    // NOTE 这里绝不回显表达式本身：凭据可能在里面（本脚本已避免这种情况，双保险）
+    console.error('EX:', String(r.exceptionDetails.text ?? '').slice(0, 200))
+  }
   return r.result?.value
 }
 
-// NOTE 登录态唯一可靠判据是 DedeUserID cookie（未登录时 passport 页也会渲染出
-// 一堆长得像登录按钮的东西，按按钮文案探测会误判）
+// 登录态唯一可靠判据是 DedeUserID cookie（未登录时 passport 页也会渲染出一堆
+// 长得像登录入口的东西，按按钮文案探测会误判）
 const LOGGED_IN = `document.cookie.includes('DedeUserID=')`
+
+const ACC_CANDIDATES = ['input[placeholder="请输入账号"]', 'input[type="text"]']
+const PWD_CANDIDATES = ['input[placeholder="请输入密码"]', 'input[type="password"]']
+const CAPTCHA_CANDIDATES = [
+  'input.body__captcha-input',
+  'input[placeholder="输入图片中的内容"]',
+]
+
+const firstExisting = async (candidates: string[]) => {
+  for (const sel of candidates) {
+    if ((await evalJs(`!!document.querySelector(${JSON.stringify(sel)})`)) === true)
+      return sel
+  }
+  return null
+}
+
+// 聚焦并全选（insertText 会替换选区），表达式里只有选择器，没有任何凭据
+const focusAndSelect = (selector: string) =>
+  evalJs(`(() => {
+    const el = document.querySelector(${JSON.stringify(selector)})
+    if (!el) return false
+    el.focus()
+    if (el.select) el.select()
+    return true
+  })()`)
 
 ws.onopen = async () => {
   await send('Page.enable')
@@ -86,38 +106,48 @@ ws.onopen = async () => {
   await send('Page.navigate', { url: 'https://passport.bilibili.com/login' })
   await sleep(6000)
 
-  // 填账号密码 + 聚焦验证码输入框。passport 是 Vue 受控输入，必须走原生 value setter
-  // 再派发 input/change，直接赋值 .value 不会被框架读走
-  const filled = await evalJs(`(() => {
-    const setVal = (el, v) => {
-      const d = Object.getOwnPropertyDescriptor(el.constructor.prototype, 'value')
-      d.set.call(el, v)
-      el.dispatchEvent(new Event('input', { bubbles: true }))
-      el.dispatchEvent(new Event('change', { bubbles: true }))
-    }
-    const acc = document.querySelector('input[placeholder="请输入账号"]')
-      || document.querySelector('input[type="text"]')
-    const pwd = document.querySelector('input[placeholder="请输入密码"]')
-      || document.querySelector('input[type="password"]')
-    if (!acc || !pwd) return 'NO-INPUTS'
-    setVal(acc, ${JSON.stringify(USER)})
-    setVal(pwd, ${JSON.stringify(PASS)})
-    const cap = document.querySelector('input.body__captcha-input')
-      || document.querySelector('input[placeholder="输入图片中的内容"]')
-    if (cap) cap.focus()
-    return cap ? 'FILLED-WITH-CAPTCHA' : 'FILLED-NO-CAPTCHA'
-  })()`)
-  console.log('填表:', filled)
-  if (filled === 'NO-INPUTS') process.exit(1)
+  const accSel = await firstExisting(ACC_CANDIDATES)
+  const pwdSel = await firstExisting(PWD_CANDIDATES)
+  const capSel = await firstExisting(CAPTCHA_CANDIDATES)
+  if (!accSel || !pwdSel) {
+    console.error('NO-INPUTS: 找不到账号/密码输入框（passport 页面结构可能已变）')
+    process.exit(1)
+  }
 
-  if (filled === 'FILLED-WITH-CAPTCHA') {
+  // 填充：值只作为 CDP 参数传给 Input.insertText，绝不进 JS 表达式
+  for (const [sel, value] of [
+    [accSel, USER],
+    [pwdSel, PASS],
+  ] as const) {
+    if (!(await focusAndSelect(sel))) {
+      console.error('NO-FOCUS: 聚焦失败')
+      process.exit(1)
+    }
+    await send('Input.insertText', { text: value })
+    await sleep(150)
+  }
+
+  // 只校验长度，不读回值
+  const lens = JSON.parse(
+    (await evalJs(`JSON.stringify({
+      acc: (document.querySelector(${JSON.stringify(accSel)}) || {}).value?.length ?? -1,
+      pwd: (document.querySelector(${JSON.stringify(pwdSel)}) || {}).value?.length ?? -1,
+    })`)) ?? '{}',
+  ) as { acc: number; pwd: number }
+  if (lens.acc !== USER.length || lens.pwd !== PASS.length) {
+    console.error('FILL-MISMATCH: 值没进输入框（检查选择器/焦点），未打印任何凭据内容')
+    process.exit(1)
+  }
+  console.log('填表: 账号密码已填入（长度校验通过）')
+
+  if (capSel) {
+    await focusAndSelect(capSel)
     console.log('')
     console.log('👉 请在调试窗口里输入图片验证码（看不清就点「换一张」）。')
     console.log('   账号密码我已经填好；你填够验证码后我会自动点「登录」，最多等 3 分钟。')
     console.log('')
   }
 
-  // 轮询：验证码填够位数就点登录（多点几次，验证码错了会换一张，等下一轮）
   const deadline = Date.now() + 180_000
   let submits = 0
   let lastSubmit = 0
@@ -128,10 +158,8 @@ ws.onopen = async () => {
       process.exit(0)
     }
     const st = await evalJs(`(() => {
-      const cap = document.querySelector('input.body__captcha-input')
-        || document.querySelector('input[placeholder="输入图片中的内容"]')
+      const cap = document.querySelector(${JSON.stringify(capSel ?? 'input[placeholder="输入图片中的内容"]')})
       const btn = document.querySelector('.btn_primary')
-        || [...document.querySelectorAll('button,div,span')].find(e => (e.textContent || '').trim() === '登录')
       return JSON.stringify({
         capLen: cap ? cap.value.length : -1,
         btnDisabled: btn ? (btn.className || '').toString().includes('disabled') : null,
@@ -142,8 +170,7 @@ ws.onopen = async () => {
       capLen: number
       btnDisabled: boolean | null
     }
-    const ready = capLen >= 4 && btnDisabled === false
-    if (ready && submits < 6 && Date.now() - lastSubmit > 6000) {
+    if (capLen >= 4 && btnDisabled === false && submits < 6 && Date.now() - lastSubmit > 6000) {
       await evalJs(
         `(() => { const b = document.querySelector('.btn_primary'); if (b) b.click(); return 'clicked' })()`,
       )
