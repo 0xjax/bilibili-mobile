@@ -11,7 +11,7 @@
 //
 // 固化的三步流程（详见 docs/dev-runbook.md）：
 //   1) bun scripts/dev/login-debug-chrome.ts --fill     脚本填账号密码（0 暴露）+ 聚焦验证码框
-//   2) 👤 人在调试窗口点「登录」，再按提示过验证码（验证码是点完登录才出现的）
+//   2) 👤 人在调试窗口完成登录：点「登录」→ 验证码出现 → 按页面提示操作
 //   3) bun scripts/dev/login-debug-chrome.ts --verify   确认登录态（DedeUserID cookie）
 // 登录态存在调试 profile 里，不是每次冷启动都要重来；已登录时 --fill 会直接报 ALREADY-LOGGED-IN。
 //
@@ -33,7 +33,7 @@ if (!mode) {
 
 完整流程：
   1) --fill          从 .env 读凭据填表（全程 0 暴露），并聚焦验证码框
-  2) 人              在调试窗口点「登录」，再按提示过验证码（图片验证码 / geetest 点选）
+  2) 人              在调试窗口完成登录：点「登录」→ 验证码出现 → 按页面提示操作
   3) --verify        确认拿到 DedeUserID cookie
 
 注：登录态存在调试 profile（D:\\chrome-debug-profile）里，不用每次冷启动重来。
@@ -178,12 +178,11 @@ ws.onopen = async () => {
   if (capSel) await focusAndSelect(capSel)
 
   console.log('')
-  console.log('👉 现在轮到你（验证码只能由人过）：')
-  console.log('   1. 点「登录」—— 图片验证码 / geetest 点选是点完登录才出现的')
-  console.log('   2. 按提示过验证码（图片验证码输入图里的字符；geetest 点选按顺序点）')
-  console.log('   3. 若显示「网络超时请点击此处重试」，那是验证码没过的兜底文案，点它重试')
   console.log('')
-  console.log('   登录完成后跑：bun scripts/dev/login-debug-chrome.ts --verify')
+  console.log('👉 现在轮到你：在调试窗口点「登录」，验证码出现后按页面提示完成登录。')
+  console.log('   实测：验证码没过时页面会显示「网络超时请点击此处重试」，那不是网络问题。')
+  console.log('')
+  console.log('   完成后跑：bun scripts/dev/login-debug-chrome.ts --verify')
   process.exit(0)
 }
 setTimeout(() => {

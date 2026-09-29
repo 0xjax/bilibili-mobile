@@ -33,13 +33,13 @@
    ```bash
    # 1) 脚本填账号密码（0 暴露，见 AGENTS.md「Secrets」），并聚焦验证码框
    bun scripts/dev/login-debug-chrome.ts --fill
-   # 2) 👤 人在调试窗口点「登录」→ 验证码是**点完登录才出现**的，再按提示过
-   #    （图片验证码输入图里的字符；geetest 点选按顺序点；若还需要再点一次「登录」就点）
+   # 2) 👤 人在调试窗口完成登录：点「登录」→ 验证码出现 → 按页面提示操作
    # 3) 确认登录态（DedeUserID cookie）
    bun scripts/dev/login-debug-chrome.ts --verify    # 打印 LOGGED-IN / NOT-LOGGED-IN
    ```
 
    - 凭据由 `bun` 自动加载仓库根 `.env`（`BILI_USER` / `BILI_PASS`），**脚本自己不读文件**；值只作为 CDP 参数经 `Input.insertText` 走真实输入管线送进页面，只用「长度是否一致」校验，从不读回、从不打印。
+   - **WARNING 流程里只写实测确认过的交互**：验证码的形态和具体操作以实际页面为准，NEVER 凭猜测往流程里补细节。教训：曾经把「先过验证码再点登录」的顺序写反，又擅自加了「可能需要再点一次「登录」」这种没验证过的步骤——写进固化文档就是噪声。
    - **登录态存在调试 profile（`D:\chrome-debug-profile`）里**，不是每次冷启动都要重来；已登录时 `--fill` 直接报 `ALREADY-LOGGED-IN`。
    - 不想用脚本完全可以：直接在调试窗口手动登录一次，效果一样。
    - 窗口没在最前面时（`Page.bringToFront` 只管标签页、不管 OS 窗口），把标题对应的窗口抬起来：
