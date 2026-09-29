@@ -1,10 +1,7 @@
 /* -------------------- 搜索页 ---------------------- */
 
-#i_cecream {
-    min-width: 0 !important;
-    /* 空内容填充高度 */
-    min-height: calc(100vh - var(--actionbar-height)) !important;
-}
+/* NOTE 旧的全局外框 `#i_cecream` 已不存在；它那条「空内容填充高度」也确认不再需要
+   （实测空结果搜索页 `.search-layout` 已有 2442px，内容早就填满） */
 
 /* 禁止按钮限制最小宽度 */
 button.vui_button {
@@ -66,31 +63,22 @@ ul.vui_tabs--nav>* {
     order: 1;
 }
 
-/* 广告 */
+/* 广告（防御性：7 个 tab 实测都未渲染该块，保留以免它回归时露出来） */
 .activity-game-list {
     display: none;
 }
 
-/* 排序筛选 */
+/*
+ * 排序筛选
+ *
+ * 站点现在把这条直接放在正常流里，**不再加 `.show`**。脚本原先按「底部抽屉」实现：
+ * 默认 `opacity: 0; pointer-events: none`，等 `.show` 才露出来 —— 而 `.show` 已经没有谁加了
+ * （src 里也没有代码加它），结果整条筛选栏被**永久藏住**：
+ * 实测 `.search-conditions` computed opacity 0、pointer-events none，「综合排序/最多播放/
+ * 最新发布/更多筛选」全部点了没反应。这里不再套抽屉样式，排布交回站点。
+ */
 .search-conditions {
-    position: fixed;
-    bottom: 0;
-    z-index: 2;
-    background: white;
     padding: 5px !important;
-    opacity: 0;
-    transition: var(--actionbar-time) ease-in;
-    pointer-events: none;
-}
-
-.search-conditions.show {
-    bottom: var(--actionbar-height);
-    opacity: 1;
-    pointer-events: auto;
-}
-
-[scroll-hidden] div.search-conditions {
-    bottom: 0;
 }
 
 /* 排序按钮 */
@@ -170,11 +158,9 @@ div.search-page.search-page-all {
     width: 100%;
 }
 
-.vui_pagenation--jump .vui_pagenation--btns {
-    margin-right: 0 !important;
-}
-
 div.vui_pagenation--btns {
+    /* 站点给这个容器留了右边距（旧标记里是给「跳页」块留的，该块已不存在） */
+    margin-right: 0 !important;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -270,13 +256,8 @@ button.vui_pagenation--btn-side:last-child {
     display: none !important;
 }
 
-/* 影视 */
-.media-item-col {
-    max-width: 100% !important;
-    flex: none !important;
-    margin-bottom: 10px !important;
-    padding: 0 !important;
-}
+/* NOTE 旧的影视结果项 `.media-item-col` / `.media-item` 已不存在（现为 `.media-list .col_6`，
+   "一行一个"由下面的 `.media-list .col_6` 规则保证 —— 实测每个卡片 386px 占满一行） */
 
 /* 用户和直播 */
 .media-list .col_6,
@@ -384,16 +365,8 @@ div.live-content {
     bottom: -16px !important;
 }
 
-/* 综合里的影视、番剧 */
-.show-more-text {
-    margin: 10px 0 20px !important;
-    z-index: 1 !important;
-}
-
-.media-item {
-    padding: 0 !important;
-}
-
+/* 综合里的影视、番剧（旧的 `.show-more-text` / `.media-item` 已不存在：
+   查看更多现为 `.watch-more`，结果项现为 `.media-card`） */
 .media-card {
     --image-width: 103px !important;
     --image-height: 139px !important;
