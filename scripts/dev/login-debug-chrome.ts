@@ -1,19 +1,15 @@
-// 调试 Chrome 登录 B 站的**人机交互流程**（不是自动化登录）。
+// 调试 Chrome 登录 B 站：脚本只做一件事 —— 把 .env 里的账号密码预填进登录页，然后停下等人。
 //
-// 为什么不能全自动：B 站密码登录会出图片验证码，风控再高一点直接上 geetest 点选验证
-// （实测点「登录」后网络里出现 api.geetest.com/...&type=click）。这类验证码**只能由人过**，
-// 属于人机交互的固有环节，不要试图绕开（试过改走扫码，方向就是错的）。
-//
-// 另一个必踩的坑：验证码没过时，页面显示的是
-// 「网络超时请点击此处重试」——文案极具误导性。实测点「登录」后按钮确实收到了完整的
-// 可信事件序列（pointerdown→mousedown→pointerup→mouseup→click），请求也确实发出去了，
-// 只是被风控拦下。所以看到「网络超时」先怀疑验证码，别去查网络。
+// 登录必须人工过验证码，所以这一步永远交给人，脚本不代劳、也不描述这一步怎么做。
 //
 // 固化的三步流程（详见 docs/dev-runbook.md）：
-//   1) bun scripts/dev/login-debug-chrome.ts --fill     脚本填账号密码（0 暴露）+ 聚焦验证码框
-//   2) 👤 人在调试窗口完成登录：点「登录」→ 验证码出现 → 按页面提示操作
-//   3) bun scripts/dev/login-debug-chrome.ts --verify   确认登录态（DedeUserID cookie）
-// 登录态存在调试 profile 里，不是每次冷启动都要重来；已登录时 --fill 会直接报 ALREADY-LOGGED-IN。
+//   1) bun scripts/dev/login-debug-chrome.ts --fill   预填账号密码（0 暴露），打印一句
+//                                                     「请你完成登录」后**立刻返回**
+//   2) 👤 人去完成登录操作 —— 怎么过验证码是人的事，脚本不插手、也不描述
+//   3) 人说完成后跑 --verify 确认登录态，再继续后面的工作
+//
+// WARNING 第 1 步返回后就**停下等人**，NEVER 再补任何「可能的 / 不确定的」操作步骤。
+//   教训：曾经往流程里塞过验证码形态、「要不要再点一次登录」之类的猜测，纯属噪声。
 //
 // CRITICAL 凭据全程 0 暴露（约束见 AGENTS.md「Secrets」）：
 //   - 本脚本**不自己读 .env**，靠 bun 自动加载到 process.env
@@ -25,19 +21,18 @@ const MODES = ['--fill', '--verify'] as const
 const mode = MODES.find((m) => process.argv.includes(m))
 
 if (!mode) {
-  console.log(`调试 Chrome 登录 B 站（人机交互流程）
+  console.log(`调试 Chrome 登录 B 站
 
 用法：
-  bun scripts/dev/login-debug-chrome.ts --fill      # 步骤 1：填账号密码，然后交给人
-  bun scripts/dev/login-debug-chrome.ts --verify    # 步骤 3：确认登录态
+  bun scripts/dev/login-debug-chrome.ts --fill      # 1) 预填账号密码，然后停下等人
+  bun scripts/dev/login-debug-chrome.ts --verify    # 3) 人说完成后，确认登录态
 
 完整流程：
-  1) --fill          从 .env 读凭据填表（全程 0 暴露），并聚焦验证码框
-  2) 人              在调试窗口完成登录：点「登录」→ 验证码出现 → 按页面提示操作
-  3) --verify        确认拿到 DedeUserID cookie
+  1) --fill     把 .env 里的账号密码预填进登录页（0 暴露），然后停下
+  2) 人         去完成登录操作（验证码只能由人过）
+  3) --verify   确认拿到 DedeUserID cookie，再继续后面的工作
 
-注：登录态存在调试 profile（D:\\chrome-debug-profile）里，不用每次冷启动重来。
-    看到「网络超时请点击此处重试」先怀疑验证码没过，那不是网络问题。`)
+注：登录态存在调试 profile（D:\\chrome-debug-profile）里，不用每次冷启动重来。`)
   process.exit(0)
 }
 
@@ -92,16 +87,11 @@ async function evalJs(expression: string) {
   return r.result?.value
 }
 
-// 登录态唯一可靠判据是 DedeUserID cookie（未登录时 passport 页也会渲染出一堆
-// 长得像登录入口的东西，按按钮文案探测会误判）
+// 登录态唯一可靠判据是 DedeUserID cookie
 const LOGGED_IN = `document.cookie.includes('DedeUserID=')`
 
 const ACC_CANDIDATES = ['input[placeholder="请输入账号"]', 'input[type="text"]']
 const PWD_CANDIDATES = ['input[placeholder="请输入密码"]', 'input[type="password"]']
-const CAPTCHA_CANDIDATES = [
-  'input.body__captcha-input',
-  'input[placeholder="输入图片中的内容"]',
-]
 
 const firstExisting = async (candidates: string[]) => {
   for (const sel of candidates) {
@@ -131,7 +121,7 @@ ws.onopen = async () => {
     process.exit(ok ? 0 : 1)
   }
 
-  // ── 步骤 1：填表，然后交给人 ────────────────────────────────────────
+  // ── 步骤 1：预填账号密码，然后停下等人 ──────────────────────────────
   if ((await evalJs(LOGGED_IN)) === true) {
     console.log('ALREADY-LOGGED-IN')
     process.exit(0)
@@ -143,7 +133,6 @@ ws.onopen = async () => {
 
   const accSel = await firstExisting(ACC_CANDIDATES)
   const pwdSel = await firstExisting(PWD_CANDIDATES)
-  const capSel = await firstExisting(CAPTCHA_CANDIDATES)
   if (!accSel || !pwdSel) {
     console.error('NO-INPUTS: 找不到账号/密码输入框（passport 页面结构可能已变）')
     process.exit(1)
@@ -173,16 +162,10 @@ ws.onopen = async () => {
     console.error('FILL-MISMATCH: 值没进输入框（检查选择器/焦点），未打印任何凭据内容')
     process.exit(1)
   }
-  console.log('账号密码已填入（长度校验通过）')
 
-  if (capSel) await focusAndSelect(capSel)
-
+  console.log('账号密码已预填。')
   console.log('')
-  console.log('')
-  console.log('👉 现在轮到你：在调试窗口点「登录」，验证码出现后按页面提示完成登录。')
-  console.log('   实测：验证码没过时页面会显示「网络超时请点击此处重试」，那不是网络问题。')
-  console.log('')
-  console.log('   完成后跑：bun scripts/dev/login-debug-chrome.ts --verify')
+  console.log('👉 请你完成登录操作，完成后告诉我，我再继续。')
   process.exit(0)
 }
 setTimeout(() => {

@@ -22,30 +22,21 @@
    (Get-Content 'D:\chrome-debug-profile\Default\Secure Preferences' -Raw) -match 'user_scripts_enabled'
    ```
 
-3. **登录 B 站（人机交互，不能全自动）**：暗色主题、个性化等状态**登录后才存在**，未登录时页面上根本没有夜间模式入口和主题样式。
-
-   **为什么不能自动**：B 站密码登录会出图片验证码，风控再高一点直接上 geetest 点选验证（实测点「登录」后网络里出现 `api.geetest.com/...&type=click`）。这类验证码只能由人过——这是人机交互的固有环节，**不要试图绕开**（试过改走扫码，方向就是错的）。
-
-   **WARNING 必踩的误导文案**：验证码没过时页面显示的是「网络超时请点击此处重试」。实测点「登录」后按钮确实收到了完整的可信事件序列（`pointerdown→mousedown→pointerup→mouseup→click`）、请求也确实发出去了，只是被风控拦下。**看到「网络超时」先怀疑验证码，别去查网络。**
-
-   固化的三步流程：
+3. **登录 B 站**：暗色主题等状态**登录后才存在**。流程固定三步，**交给人之后就停下等人**：
 
    ```bash
-   # 1) 脚本填账号密码（0 暴露，见 AGENTS.md「Secrets」），并聚焦验证码框
+   # 1) 脚本把 .env 里的账号密码预填进登录页（0 暴露），打印「请你完成登录」后立刻停下
    bun scripts/dev/login-debug-chrome.ts --fill
-   # 2) 👤 人在调试窗口完成登录：点「登录」→ 验证码出现 → 按页面提示操作
-   # 3) 确认登录态（DedeUserID cookie）
+   # 2) 👤 人去完成登录操作 —— 怎么过验证码是人的事，脚本不插手、也不描述这一步
+   # 3) 人说完成后，确认登录态再继续后面的工作
    bun scripts/dev/login-debug-chrome.ts --verify    # 打印 LOGGED-IN / NOT-LOGGED-IN
    ```
 
-   - 凭据由 `bun` 自动加载仓库根 `.env`（`BILI_USER` / `BILI_PASS`），**脚本自己不读文件**；值只作为 CDP 参数经 `Input.insertText` 走真实输入管线送进页面，只用「长度是否一致」校验，从不读回、从不打印。
-   - **WARNING 流程里只写实测确认过的交互**：验证码的形态和具体操作以实际页面为准，NEVER 凭猜测往流程里补细节。教训：曾经把「先过验证码再点登录」的顺序写反，又擅自加了「可能需要再点一次「登录」」这种没验证过的步骤——写进固化文档就是噪声。
+   - 登录必须人工过验证码，所以这一步永远交给人，**不要试图绕开**（试过改走扫码，方向就是错的）。
+   - 凭据由 `bun` 自动加载仓库根 `.env`（`BILI_USER` / `BILI_PASS`），**脚本自己不读文件**；值只作为 CDP 参数经 `Input.insertText` 送进页面，只用「长度是否一致」校验，从不读回、从不打印。
+   - **WARNING 交给人的部分就交给人**：`--fill` 返回后就**停下等人**，NEVER 再补任何「可能的 / 不确定的」操作步骤（验证码长什么样、要不要再点一次、点哪个链接……）——那些是人的事，写进流程就是噪声。
    - **登录态存在调试 profile（`D:\chrome-debug-profile`）里**，不是每次冷启动都要重来；已登录时 `--fill` 直接报 `ALREADY-LOGGED-IN`。
-   - 不想用脚本完全可以：直接在调试窗口手动登录一次，效果一样。
-   - 窗口没在最前面时（`Page.bringToFront` 只管标签页、不管 OS 窗口），把标题对应的窗口抬起来：
-     ```powershell
-     (New-Object -ComObject WScript.Shell).AppActivate('账号登录 - Google Chrome')
-     ```
+   - 窗口没在最前面时：`(New-Object -ComObject WScript.Shell).AppActivate('账号登录 - Google Chrome')`
 
 ## 日常启动
 
