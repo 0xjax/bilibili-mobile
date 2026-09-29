@@ -33,7 +33,8 @@
    ```bash
    # 1) 脚本填账号密码（0 暴露，见 AGENTS.md「Secrets」），并聚焦验证码框
    bun scripts/dev/login-debug-chrome.ts --fill
-   # 2) 👤 人在调试窗口过验证码并点「登录」（图片验证码输入字符；geetest 点选按提示点）
+   # 2) 👤 人在调试窗口点「登录」→ 验证码是**点完登录才出现**的，再按提示过
+   #    （图片验证码输入图里的字符；geetest 点选按顺序点；若还需要再点一次「登录」就点）
    # 3) 确认登录态（DedeUserID cookie）
    bun scripts/dev/login-debug-chrome.ts --verify    # 打印 LOGGED-IN / NOT-LOGGED-IN
    ```
