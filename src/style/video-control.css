@@ -220,17 +220,39 @@ div.bpx-player-ctrl-subtitle-box {
 
 /* 控制栏可见性完全由 ctrl-shown 属性管理，不再依赖 .new 类 */
 
-/* 彻底接管控制栏可见性，屏蔽 B 站原生 data-ctrl-hidden 隐藏逻辑 */
-.bpx-player-control-wrap,
-.bpx-player-control-entity {
+/*
+ * 屏蔽 B 站原生 data-ctrl-hidden 的隐藏逻辑，避免控制栏自动隐藏后连点击都唤不起。
+ *
+ * 限定 .bpx-player-container[ctrl-shown] 前缀的实测依据（Chrome 抓真实 DOM / CSSOM 确认）：
+ * 1) 原生 [data-ctrl-hidden="true"] 规则只作用于 .bpx-player-control-bottom /
+ *    .bpx-player-control-mask / .bpx-player-top-wrap 等子节点，并不直接作用于 wrap / entity，
+ *    且全部未使用 !important——所以这里并不是靠权重压过原生规则，而是补齐 opacity /
+ *    visibility / pointer-events 的接管（真正的显隐由下方 [ctrl-shown] 系列规则驱动）。
+ * 2) 不加前缀才是真风险：小窗形态下原生用
+ *    .bpx-player-rich-pip-root > .bpx-player-control-wrap { opacity: 0; pointer-events: none; }
+ *    隐藏控制栏，无条件规则会把小窗控制栏强行显形并可点击。
+ * 3) ctrl-shown 是脚本独有的标记（原生容器只有 data-ctrl-hidden / data-screen 等属性），
+ *    因此它恰好可以当「脚本已接管」的判据；接管后 ctrl-shown 恒为 true 或 false（属性始终存在），
+ *    wrap / entity 的显隐语义与收窄前完全一致；未接管（小窗 / 全屏 / ending 原生形态）时不再生效。
+ */
+.bpx-player-container[ctrl-shown] .bpx-player-control-wrap,
+.bpx-player-container[ctrl-shown] .bpx-player-control-entity {
     opacity: 1 !important;
     pointer-events: auto !important;
     visibility: visible !important;
 }
 
-/* 窄屏不禁用控制条和阴影 */
-.bpx-player-control-entity,
-.bpx-player-control-mask {
+/*
+ * 窄屏不禁用控制条和阴影。
+ *
+ * 同样限定 [ctrl-shown] 前缀。实测当前播放器 CSS（含全部 @media）里没有任何规则对
+ * .bpx-player-control-entity / .bpx-player-control-mask 设置 display，原生一律用 opacity
+ * 控制显隐（见上方 data-ctrl-hidden 规则），这条更像旧 .new 容器时代的兜底。
+ * 保留规则本身是为了兼容可能仍有窄屏 display 隐藏逻辑的页面类型，但不再在脚本未接管时越界生效：
+ * 它带 !important，会把之后任何（含内联）display:none 一并压掉，小窗 / embedded 等原生形态会被误伤。
+ */
+.bpx-player-container[ctrl-shown] .bpx-player-control-entity,
+.bpx-player-container[ctrl-shown] .bpx-player-control-mask {
     display: block !important;
 }
 

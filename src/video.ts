@@ -28,6 +28,12 @@ export function videoInteraction() {
 let playerAbortController: AbortController | null = null
 let playerObserverActive = false
 
+// 已绑定监听器的 video 元素。换集 / 切视频时 B 站可能复用 controlWrap 却替换内部 video，
+// 仅凭容器标记会漏绑，因此以 video 节点本身作为绑定依据。
+let boundVideo: HTMLVideoElement | null = null
+// 已绑定的控制栏节点。video 未变但控制栏被重建时，旧监听器会随旧节点一起失效，同样需要重绑。
+let boundControlWrap: HTMLElement | null = null
+
 /**
  * 监听播放器 DOM 就绪和重建（B 站 SPA 导航、Vue 组件刷新）。
  * 控件可见性完全由 ctrl-shown 属性 + CSS 管理，不再依赖自建 .new 容器。
@@ -37,12 +43,6 @@ function observePlayerRebuild() {
   playerObserverActive = true
 
   const observer = new MutationObserver(() => {
-    const controlWrap = document.querySelector(
-      '.bpx-player-control-wrap',
-    ) as HTMLElement | null
-    if (!controlWrap) return
-    if (controlWrap.dataset.evtBound) return
-
     tryInitPlayerControls()
   })
 
@@ -65,33 +65,36 @@ function tryInitPlayerControls() {
   const controlEntity = controlWrap?.querySelector(
     '.bpx-player-control-entity',
   ) as HTMLElement | null
+  // 以播放器内的 video 为准，避免绑到页面里其它 video 元素
+  const video = playerContainer?.querySelector('video') as
+    | HTMLVideoElement
+    | null
 
-  if (!playerContainer || !videoArea || !controlWrap || !controlEntity) return
+  if (!playerContainer || !videoArea || !controlWrap || !controlEntity || !video)
+    return
 
-  // 标记当前 wrap 已绑定，防止 observer 重复触发
-  controlWrap.dataset.evtBound = '1'
+  // 以 video 节点身份为主判据：video / 控制栏任一被替换都需要重新绑定
+  if (boundVideo === video && boundControlWrap === controlWrap) return
 
   // 清理上一轮绑定的监听器，防止播放器重建后累积
   playerAbortController?.abort()
   playerAbortController = new AbortController()
   const { signal } = playerAbortController
+  boundVideo = video
+  boundControlWrap = controlWrap
 
-  handlePortrait(signal)
-  handlelVideoClick(signal)
-  handleVideoInteraction(signal)
+  // 以已解析的 playerContainer / videoArea / video 显式传参，
+  // 避免处理过程中节点被替换 / 页面存在其它 video 时绑错
+  handlePortrait(video, signal)
+  handlelVideoClick(playerContainer, videoArea, video, signal)
+  handleVideoInteraction(video, signal)
 }
 
 // ─── 播放器内部交互逻辑 ───────────────────────────────────────────────────────
 
 let isPortrait = false
 
-function handlePortrait(signal: AbortSignal) {
-  const video = document.querySelector(
-    '#bilibili-player video',
-  ) as HTMLVideoElement | null
-
-  if (!video) return
-
+function handlePortrait(video: HTMLVideoElement, signal: AbortSignal) {
   video.addEventListener(
     'resize',
     () => {
@@ -102,13 +105,12 @@ function handlePortrait(signal: AbortSignal) {
 }
 
 // 接管视频点击事件
-function handlelVideoClick(signal: AbortSignal) {
-  const playerContainter = document.querySelector(
-    '.bpx-player-container',
-  ) as HTMLElement
-  const videoArea = playerContainter.querySelector(
-    '.bpx-player-video-area',
-  ) as HTMLElement
+function handlelVideoClick(
+  playerContainer: HTMLElement,
+  videoArea: HTMLElement,
+  video: HTMLVideoElement,
+  signal: AbortSignal,
+) {
   const videoPerch = videoArea.querySelector(
     '.bpx-player-video-perch',
   ) as HTMLElement | null
@@ -117,9 +119,6 @@ function handlelVideoClick(signal: AbortSignal) {
   const videoWrap = (videoPerch?.querySelector('.bpx-player-video-wrap') ||
     videoArea.querySelector('.bpx-player-video-wrap')) as HTMLElement | null
   if (!videoWrap) return
-
-  const video = videoWrap.querySelector('video') as HTMLVideoElement
-  if (!video) return
 
   // 架空双击全屏层以适应竖屏
   if (videoPerch && videoWrap.parentElement === videoPerch) {
@@ -133,10 +132,12 @@ function handlelVideoClick(signal: AbortSignal) {
   // 控件可见性完全由 ctrl-shown 属性与 CSS 管理
   const controlWrap = videoArea.querySelector(
     '.bpx-player-control-wrap',
-  ) as HTMLElement
+  ) as HTMLElement | null
+  if (!controlWrap) return
   const controlEntity = controlWrap.querySelector(
     '.bpx-player-control-entity',
-  ) as HTMLElement
+  ) as HTMLElement | null
+  if (!controlEntity) return
 
   let clickTimer: number
   let hideTimer: number
@@ -153,10 +154,10 @@ function handlelVideoClick(signal: AbortSignal) {
     '.bpx-player-control-bottom-right',
   ) as HTMLElement | null
 
-  const isShown = () => playerContainter.getAttribute('ctrl-shown') === 'true'
+  const isShown = () => playerContainer.getAttribute('ctrl-shown') === 'true'
 
   // 初始设为显示状态，随后由 delayHideTimer 统一管理
-  playerContainter.setAttribute('ctrl-shown', 'true')
+  playerContainer.setAttribute('ctrl-shown', 'true')
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
@@ -190,7 +191,7 @@ function handlelVideoClick(signal: AbortSignal) {
 
   function hideControlWrap(isEnd: boolean = false) {
     if ((!video.paused && !isBpxStateShow()) || isEnd) {
-      playerContainter.setAttribute('ctrl-shown', 'false')
+      playerContainer.setAttribute('ctrl-shown', 'false')
       clearTimeout(hideTimer)
     } else {
       delayHideTimer()
@@ -206,7 +207,7 @@ function handlelVideoClick(signal: AbortSignal) {
   )
 
   function showControlWrap() {
-    playerContainter.setAttribute('ctrl-shown', 'true')
+    playerContainer.setAttribute('ctrl-shown', 'true')
     delayHideTimer()
   }
 
@@ -330,10 +331,7 @@ function closeMiniPlayer() {
   }
 }
 
-function handleVideoInteraction(signal: AbortSignal) {
-  const video = document.querySelector('video') as HTMLVideoElement | null
-  if (!video) return
-
+function handleVideoInteraction(video: HTMLVideoElement, signal: AbortSignal) {
   let startX: number, startY: number, startTime: number
   const threshold = 10 // 滑动阈值
   const initialCheckDuration = 300
@@ -452,6 +450,8 @@ function handleVideoInteraction(signal: AbortSignal) {
 // 折叠简介
 function foldDescTag() {
   if (!GM_getValue('fold-desc-tag', false)) return
+  // 幂等：SPA 来回导航会重复调用 videoInteraction，已注入则不再创建
+  if (document.querySelector('#fold-desc-btn')) return
 
   const leftContainer = document.querySelector(
     '.left-container',
@@ -470,9 +470,11 @@ function foldDescTag() {
     leftContainer.toggleAttribute('unfold')
   })
 
-  // 等待评论预加载
+  // 等待评论预加载；插入前再确认，避免两次调用在 2s 内交错导致重复注入
   setTimeout(() => {
-    commentApp.insertBefore(foldBtn, commentApp.firstChild)
+    if (!foldBtn.isConnected && !document.querySelector('#fold-desc-btn')) {
+      commentApp.insertBefore(foldBtn, commentApp.firstChild)
+    }
     ;(document.querySelector('.toggle-btn') as HTMLElement | null)?.click()
     ;(
       document.querySelector('.tag:has(>.show-more-btn)') as HTMLElement | null
