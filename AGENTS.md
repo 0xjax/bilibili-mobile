@@ -17,3 +17,11 @@ B 站移动端优化油猴脚本，vite + vite-plugin-monkey 构建。
 - 新增设置项 → `src/setting.ts` 的 `keyValues` 加键；功能代码用 `GM_getValue(key, default)` 读取
 - 样式在 `src/style/*.css`，在 `main.ts` 以副作用导入，由插件内联进产物并经 GM_addStyle 注入
 - 代码注释与提交信息用中文；提交信息遵循 Conventional Commits
+
+## Secrets
+
+- **MUST NOT** read `.env`, `.env.*`, or any secrets file
+- **MUST NOT** expose secrets in logs, comments, commits, PR 描述, or tool output
+- **MUST NOT** put secrets in command arguments
+- When env var values are needed, ask the user to provide them directly
+- 开发环境验证：NEVER 用账号密码自行登录；需要登录态时由用户在调试窗口手动登录一次（登录态留在调试 profile 里）
