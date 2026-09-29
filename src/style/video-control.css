@@ -242,9 +242,17 @@ div.bpx-player-ctrl-subtitle-box {
     visibility: visible !important;
 }
 
-/* 窄屏不禁用控制条和阴影 */
-.bpx-player-control-entity,
-.bpx-player-control-mask {
+/*
+ * 窄屏不禁用控制条和阴影。
+ *
+ * 同样限定 [ctrl-shown] 前缀。实测当前播放器 CSS（含全部 @media）里没有任何规则对
+ * .bpx-player-control-entity / .bpx-player-control-mask 设置 display，原生一律用 opacity
+ * 控制显隐（见上方 data-ctrl-hidden 规则），这条更像旧 .new 容器时代的兜底。
+ * 保留规则本身是为了兼容可能仍有窄屏 display 隐藏逻辑的页面类型，但不再在脚本未接管时越界生效：
+ * 它带 !important，会把之后任何（含内联）display:none 一并压掉，小窗 / embedded 等原生形态会被误伤。
+ */
+.bpx-player-container[ctrl-shown] .bpx-player-control-entity,
+.bpx-player-container[ctrl-shown] .bpx-player-control-mask {
     display: block !important;
 }
 
