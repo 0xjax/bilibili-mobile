@@ -152,6 +152,20 @@ div.bili-header .v-popover[show] {
     max-width: 300px;
 }
 
+/* 历史面板（脚本自建，见 menu.ts 的 createExtraDialog） */
+#history-list-dialog.v-popover {
+    z-index: 2;
+    width: 92%;
+    max-width: 620px;
+}
+
+/* 历史列表本身滚动，面板不跟着撑高 */
+#history-list-dialog .header-tabs-panel__content {
+    max-height: 60vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
 /* 链接框 */
 div.bili-header-channel-panel {
     display: flex;
@@ -175,7 +189,8 @@ div.bili-header-channel-panel {
 /* 展开图 */
 .dynamic-panel-popover,
 .favorite-panel-popover,
-.history-panel-popover {
+.history-panel-popover,
+.follow-list-panel {
     max-width: 100%;
     padding: 0 5px !important;
 }

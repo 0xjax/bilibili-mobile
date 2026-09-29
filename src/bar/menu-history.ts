@@ -8,15 +8,20 @@ export async function handleHistoryShowMore() {
     view_at: 0,
   }
   let pn = 0
-  let isHistoryItem = true
   let isAddSearchItem = false
 
   const data = await getHistoryList(cursor)
   cursor = data.cursor
 
-  const historyContent = document.querySelector(
+  const historyPanel = document.querySelector(
     '.history-panel-popover>.header-tabs-panel__content',
-  ) as HTMLElement
+  ) as HTMLElement | null
+
+  // 面板不在（或站点标记又变）就安静退出。**这里绝不能抛**：本函数跑在 setTimeout 里，
+  // 抛出去就是一条未处理的 Promise 拒绝 —— 站点撤掉顶栏历史弹层后每次加载都在抛。
+  if (!historyPanel) return
+  // 收窄后另存：下面有函数声明会引用它，TS 不会把 const 的收窄带进函数声明里
+  const historyContent: HTMLElement = historyPanel
 
   // 添加历史搜索
   const historySearch = Object.assign(document.createElement('form'), {
@@ -74,52 +79,11 @@ export async function handleHistoryShowMore() {
     data.list.forEach(addElementByItem) // 简写形式有时需绑定 this
   })
 
-  function removeNoFirstStyle() {
-    isHistoryItem = true
-    historyContent.querySelector('#no-first-history-item')?.remove()
-  }
-
-  function addNoFirstStyle() {
-    isHistoryItem = false
-    if (!historyContent.querySelector('#no-first-history-item')) {
-      const style = document.createElement('style')
-      style.id = 'no-first-history-item'
-      style.textContent = `
-      .header-tabs-panel__content>a.header-history-card {display: none}
-      .header-tabs-panel__content>a.view-all-history-btn {display: block !important}
-      .header-tabs-panel__content>form#nav-searchform {display: none}
-      div.header-tabs-panel__content>div {display: block}
-      `
-      historyContent.appendChild(style)
-    }
-  }
-
-  const historyPanel = document.querySelector(
-    '.header-tabs-panel',
-  ) as HTMLElement
-  const observer = new MutationObserver((mutationsList) => {
-    mutationsList.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (
-          node.nodeType === Node.ELEMENT_NODE &&
-          (node as Element).className === 'header-tabs-panel__item' &&
-          node.textContent === '专栏'
-        ) {
-          historyPanel.children[0].addEventListener('click', removeNoFirstStyle)
-          historyPanel.children[1].addEventListener('click', addNoFirstStyle)
-          historyPanel.children[2].addEventListener('click', addNoFirstStyle)
-          observer.disconnect()
-        }
-      })
-    })
-  })
-  observer.observe(historyPanel, { childList: true })
+  // NOTE 这里原先还盯着站点历史面板的「专栏」tab（切到专栏时隐藏脚本的卡片、露出站点的
+  // 「查看全部历史」）。站点撤掉那个弹层后这些逻辑再无对象 —— 面板现在由脚本自己提供
+  // （见 menu.ts 的 createExtraDialog），所以整段移除。
 
   async function onScroll() {
-    if (!isHistoryItem) {
-      return
-    }
-
     const { scrollTop, scrollHeight, clientHeight } = historyContent
     if (Math.abs(scrollTop + clientHeight - scrollHeight) > 1) {
       return
@@ -143,6 +107,9 @@ export async function handleHistoryShowMore() {
     data.list.forEach(addElementByItem) // 简写形式有时需绑定 this
   }
   historyContent.addEventListener('scroll', onScroll)
+
+  // 站点原来的历史列表随它的弹层一起消失了，初始这批要由脚本自己渲染出来
+  data.list.forEach(addElementByItem)
 
   function addElementByItem(item: {
     progress: number

@@ -9,6 +9,7 @@ import './style/message.css'
 import './style/video.css'
 import './style/video-control.css'
 import './style/read.css'
+import './style/history.css'
 
 import {
   preventBeforeUnload,
@@ -63,6 +64,7 @@ import { initShadowHook } from './utils/shadow.ts'
     '/video': 'video',
     '/list': 'list',
     '/bangumi': 'video',
+    '/history': 'history',
   }
 
   const getTypeFromPath = (map: Record<string, string>) => {
@@ -111,9 +113,15 @@ import { initShadowHook } from './utils/shadow.ts'
         () => {
           // 悬浮底栏只在有专属按钮布局的页面注入
           if (
-            ['home', 'video', 'list', 'search', 'space', 'message'].includes(
-              type,
-            )
+            [
+              'home',
+              'video',
+              'list',
+              'search',
+              'space',
+              'message',
+              'history',
+            ].includes(type)
           ) {
             handleActionbar(type)
           }
