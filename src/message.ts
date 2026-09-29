@@ -1,49 +1,39 @@
 import { GM_getValue } from './utils/gm.ts'
 
 export function createUnfoldBtn() {
-  const messageContainer = document.querySelector(
-    'body>.container',
-  ) as HTMLElement | null
+  // 会话列表是 CSS-module 哈希类名（`_Sidebar_1k2p2_10`，哈希随站点构建变），只能按前缀匹配
+  const LIST = 'main.message-main [class^="_Sidebar_"]'
+  const findList = () => document.querySelector(LIST) as HTMLElement | null
 
-  // 站点改过消息页标记（body 下现在是 header#message-pc-header + #app，没有 body>.container），
-  // 取不到就安静退出：「展开按钮」暂不生效，但绝不能把异常抛出去
-  if (!messageContainer) return
+  const list = findList()
+  if (list) {
+    addButton(list)
+    return
+  }
 
-  const observer = new MutationObserver((mutations) =>
-    mutations.forEach((mutation) => {
-      // innerHTML 属性可一次性插入多个节点。此处 mutation.addedNodes.length 为 0 或 1。非数组使用 for...of 循环。
-      const addedNode = mutation.addedNodes[0]
-      if (
-        addedNode?.nodeType === Node.ELEMENT_NODE &&
-        (addedNode as HTMLElement).classList.contains('bili-im')
-      ) {
-        createElement()
-        observer.disconnect()
-      }
-    }),
-  )
-  observer.observe(messageContainer, { childList: true, subtree: true })
+  // 会话列表可能还没渲染（SPA）：观察 #app 等它出现；取不到就安静退出，绝不抛
+  const host = document.querySelector('#app')
+  if (!host) return
+  const observer = new MutationObserver(() => {
+    const found = findList()
+    if (!found) return
+    observer.disconnect()
+    addButton(found)
+  })
+  observer.observe(host, { childList: true, subtree: true })
 
-  function createElement() {
+  function addButton(listEl: HTMLElement) {
+    if (document.getElementById('unfold-btn')) return
     const unfoldBtn = Object.assign(document.createElement('div'), {
       id: 'unfold-btn',
       textContent: '展开',
     })
-    const messageList = document.querySelector(
-      '.bili-im .left',
-    ) as HTMLElement | null
-    // 同理：站点标记变了就安静退出
-    if (!messageList) return
-    messageList.appendChild(unfoldBtn)
+    listEl.appendChild(unfoldBtn)
 
+    // 宽度由 message.css 的 [unfold] 规则接管（70px ↔ 240px）
     unfoldBtn.addEventListener('click', () => {
-      if (messageList.style.cssText === '') {
-        messageList.style.cssText = 'width: 240px !important'
-        unfoldBtn.textContent = '折叠'
-      } else {
-        messageList.style.cssText = ''
-        unfoldBtn.textContent = '展开'
-      }
+      const unfolded = listEl.toggleAttribute('unfold')
+      unfoldBtn.textContent = unfolded ? '折叠' : '展开'
     })
   }
 }

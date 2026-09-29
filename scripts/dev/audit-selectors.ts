@@ -62,7 +62,11 @@ const ALL_PAGES: PageCfg[] = [
     url: 'https://message.bilibili.com/',
     probe: '.message-layout',
   },
-  // 空间页子路由：space.css 里大量选择器属于这些页面
+  // 消息页是 hash 路由 SPA：这几个 tab 的标记与「私信」不同，message.css 大量规则属于它们
+  { name: 'message-reply', url: 'https://message.bilibili.com/#/reply', probe: '.message-layout', optIn: true },
+  { name: 'message-at', url: 'https://message.bilibili.com/#/at', probe: '.message-layout', optIn: true },
+  { name: 'message-like', url: 'https://message.bilibili.com/#/like', probe: '.message-layout', optIn: true },
+  { name: 'message-system', url: 'https://message.bilibili.com/#/system', probe: '.message-layout', optIn: true },  // 空间页子路由：space.css 里大量选择器属于这些页面
   {
     name: 'space-dynamic',
     url: 'https://space.bilibili.com/2/dynamic',

@@ -323,8 +323,8 @@ export function handleScriptSetting() {
     appendStyle(
       'message-sidebar-change-right' /* window slide 也获取该值 */,
       `
-      .space-left.space-left { left: 100%; }      
-      body>.container[sidebar] .space-left.space-left { transform: translateX(-100%); }
+      /* 分类栏靠右：站点现在是 flex 并排，改 order 即可 */      
+      aside.message-aside { order: 1 !important; }
     `,
     )
   }

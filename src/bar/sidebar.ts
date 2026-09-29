@@ -73,19 +73,20 @@ export function setSidebarBtn(type: 'video' | 'list' | 'message'): void {
 
   // 处理消息侧边栏
   function handleMessageSidebar() {
-    const sidebarFab = document.getElementById('sidebar-fab') as HTMLElement
-    const messageContainer = document.querySelector(
-      'body>.container',
-    ) as HTMLElement
+    const sidebarFab = document.getElementById('sidebar-fab') as HTMLElement | null
+    // 站点改过消息页标记：旧外层 `body>.container` 已不存在，现在是 `#app`
+    const messageContainer = document.querySelector('#app') as HTMLElement | null
+    // 取不到就安静退出：这里绝不能抛（点一下 fab 就报错）
+    if (!sidebarFab || !messageContainer) return
+
+    const sidebarOverlay = document.createElement('div')
+    sidebarOverlay.id = 'sidebar-overlay'
+    sidebarFab.appendChild(sidebarOverlay)
 
     sidebarFab.addEventListener('click', () => {
       messageContainer.toggleAttribute('sidebar')
       sidebarOverlay.classList.toggle('show')
       sidebarFab.classList.toggle('active')
     })
-
-    const sidebarOverlay = document.createElement('div')
-    sidebarOverlay.id = 'sidebar-overlay'
-    sidebarFab.appendChild(sidebarOverlay)
   }
 }

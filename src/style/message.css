@@ -1,162 +1,67 @@
-/* ------------- 消息页(fuck: 顶栏不统一) ------------ */
+/* ------------- 消息页 ------------- */
 
-/* 顶栏外框 */
-#internationalHeader {
-    top: -64px !important;
+/*
+ * B 站这页现在是「分类栏(aside.message-aside) + 主区(main.message-main)」常驻并排，
+ * 且 main / 会话列表所在的 _Main_ 都是**固定宽度** —— 光把 aside 收窄**不会**自动补位
+ * （实测：aside 140 → 0，main 仍停在 840，白留一条空档），必须同时把它们改成 flex 才吃得到。
+ * 实测对话区宽度：580（站点默认）→ 720（收起分类栏）→ 890（再收起会话列表）。
+ *
+ * NOTE 会话列表是 CSS-module 哈希类名（`_Sidebar_1k2p2_10`，哈希随站点构建变），
+ * 所以只能按前缀 `[class^="_Sidebar_"]` 匹配，且限定在 main.message-main 之内，避免撞上别的页面。
+ */
 
-    /* 禁用原最小宽度(适配搜索框宽度) */
-    min-width: 0 !important;
-
-    /* 登录通知 */
-    position: fixed;
+main.message-main {
+    flex: 1 1 auto !important;
+    width: auto !important;
 }
 
-/* 顶栏空白 */
-#message-navbar {
-    display: none;
+/* 分类栏：默认收起，由底栏按钮 / 左右滑动展开（[sidebar] 属性由 sidebar.ts 切换） */
+aside.message-aside {
+    width: 0 !important;
+    overflow: hidden !important;
+    transition: width .35s ease-in;
 }
 
-/* 主体纵向居中 */
-body>.container {
-    margin-top: 0;
+#app[sidebar] aside.message-aside {
+    width: 140px !important;
 }
 
-.space-right {
-    padding-top: calc(32px - var(--actionbar-height)/2);
+main.message-main [class^="_Main_"] {
+    flex: 1 1 auto !important;
+    width: auto !important;
 }
 
-/* 主体宽度 */
-.container {
-    width: 100% !important;
-}
-
-/* 搜索框 */
-div.international-header .nav-search-box {
-    position: absolute;
-    width: 100%;
-    left: 0;
-    top: 64px;
-    padding: 10px 20px 5px;
-    z-index: 3;
-    margin: 0;
-
-    opacity: 0;
-    transform: scale(.9);
-    transition: .4s ease-in;
-    display: none;
-}
-
-div.international-header .nav-search-box[show] {
-    opacity: 1;
-    transform: none;
-}
-
-/* 禁止标题("我的消息"等)、发送框、多人点赞时的头像突出 */
-.space-right-top,
-.send-box,
-.count-2 .avatar:first-child {
-    z-index: 0 !important;
-}
-
-/* 消息分类改为侧边栏 */
-.space-left {
-    position: fixed;
-    height: 100%;
-    z-index: 3;
-    left: -140px;
-    transition: transform .4s ease-in;
-}
-
-body>.container[sidebar] .space-left {
-    transform: translateX(100%);
-}
-
-/* 侧边栏内容居中 */
-.space-left .side-bar {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-/* 消息列表 */
-.bili-im .left {
+/* 会话列表：默认 70px（只留头像），[unfold] 时展开到 240px */
+main.message-main [class^="_Sidebar_"] {
     width: 70px !important;
-    transition: width .4s ease-in;
+    overflow: hidden !important;
+    transition: width .35s ease-in;
 }
 
-/* 列表头 */
-.bili-im .left .title {
-    padding-left: 10px !important;
+main.message-main [class^="_Sidebar_"][unfold] {
+    width: 240px !important;
 }
 
-/* 列表项 */
-.bili-im .left .list-item {
-    padding: 15px;
-
-    .avatar {
-        margin-right: 15px;
-    }
+/* 收起态下标题会竖排换行然后被裁（实测很难看），直接藏掉 */
+main.message-main [class^="_Sidebar_"]:not([unfold]) [class^="_SidebarHeader_"] {
+    display: none !important;
 }
 
-/* 列表底部留空 36px */
-.bili-im .left .list-container {
+/* 给底部的展开按钮留出位置：_SidebarContent_ 占满高度会把按钮顶出可视区（被 overflow:hidden 裁掉） */
+main.message-main [class^="_Sidebar_"]:not([unfold]) [class^="_SidebarContent_"] {
+    height: calc(100% - 36px) !important;
+}
+
+/* 展开态：标题 36px + 底部按钮 36px */
+main.message-main [class^="_Sidebar_"][unfold] [class^="_SidebarContent_"] {
     height: calc(100% - 72px) !important;
 }
 
-/* 列表添加展开按钮 */
+/* 会话列表底部的展开按钮（由 message.ts 注入） */
 #unfold-btn {
     padding-left: 22px;
     line-height: 35px;
     height: 36px;
     border-top: 1px solid #e9eaec;
     user-select: none;
-}
-
-/* 删除聊天 */
-.list-item .close {
-    width: 18px !important;
-}
-
-/* 消息通知 */
-.msg-notify {
-    width: 100% !important;
-}
-
-/* 消息外框（滚动） */
-.message-list {
-    padding: 5px;
-    /* 固定宽度: 减去最外(.space-right) padding 20px, 消息列表 70px */
-    width: calc(100vw - 90px);
-}
-
-/* 隐藏嵌套滚动条后，溢出内容依然影响滚动，且难以调试 */
-
-/* 滚动异常。勉强能用。why? */
-.dynamic-link i {
-    vertical-align: bottom;
-}
-
-.msg-item div.message {
-    margin: 0;
-}
-
-.notify-wrapper  {
-    min-height: 32px !important;
-}
-
-/* 移除不必要的滚动条 */
-body:has(>#samantha-toast-container) {
-    overflow: unset;
-}
-
-/* 聊天设置 */
-.bili-im .menu-list {
-    left: unset !important;
-    right: 0;
-}
-
-/* 登录通知 */
-.notification-warp {
-    width: 100% !important;
-    overflow: auto;
 }
