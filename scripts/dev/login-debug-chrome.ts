@@ -1,19 +1,45 @@
-// 调试 Chrome 登录 B 站。凭据来源：仓库根 .env（bun 自动加载）。
+// 调试 Chrome 登录 B 站的**人机交互流程**（不是自动化登录）。
 //
-// CRITICAL 全程「0 暴露」（约束见 AGENTS.md「Secrets」）：
-//   - 本脚本**不自己读 .env 文件**，靠 bun 自动加载到 process.env
+// 为什么不能全自动：B 站密码登录会出图片验证码，风控再高一点直接上 geetest 点选验证
+// （实测点「登录」后网络里出现 api.geetest.com/...&type=click）。这类验证码**只能由人过**，
+// 属于人机交互的固有环节，不要试图绕开（试过改走扫码，方向就是错的）。
+//
+// 另一个必踩的坑：验证码没过时，页面显示的是
+// 「网络超时请点击此处重试」——文案极具误导性。实测点「登录」后按钮确实收到了完整的
+// 可信事件序列（pointerdown→mousedown→pointerup→mouseup→click），请求也确实发出去了，
+// 只是被风控拦下。所以看到「网络超时」先怀疑验证码，别去查网络。
+//
+// 固化的三步流程（详见 docs/dev-runbook.md）：
+//   1) bun scripts/dev/login-debug-chrome.ts --fill     脚本填账号密码（0 暴露）+ 聚焦验证码框
+//   2) 👤 人在调试窗口里过验证码并点「登录」
+//   3) bun scripts/dev/login-debug-chrome.ts --verify   确认登录态（DedeUserID cookie）
+// 登录态存在调试 profile 里，不是每次冷启动都要重来；已登录时 --fill 会直接报 ALREADY-LOGGED-IN。
+//
+// CRITICAL 凭据全程 0 暴露（约束见 AGENTS.md「Secrets」）：
+//   - 本脚本**不自己读 .env**，靠 bun 自动加载到 process.env
 //   - NEVER 打印凭据（连长度以外的信息都不打）、NEVER 放进命令行参数
-//   - NEVER 把凭据拼进 Runtime.evaluate 的表达式字符串 —— 表达式一旦抛错，
-//     内容会随异常回显出来。凭据只作为 CDP 参数走 Input.insertText 真实输入管线
+//   - 凭据只作为 CDP 参数走 Input.insertText 真实输入管线，NEVER 拼进 Runtime.evaluate
+//     的表达式字符串（表达式一旦抛错会把内容随异常回显出来）
 //   - 填完只用「长度是否一致」校验，不读回值
-//
-// WARNING B 站密码登录有图片验证码（还可能叠加 geetest 风控），无法无人值守：
-//   本脚本填完账号密码后会停下，等你手动输入图片验证码；检测到验证码填够位数就自动点
-//   「登录」，再轮询 DedeUserID cookie 确认。也可以完全不跑本脚本，直接在调试窗口
-//   手动登录一次（登录态存在调试 profile 里，不用每次重来）。
-//
-// 用法：bun scripts/dev/login-debug-chrome.ts [tab url 包含子串，默认 bilibili]
-const [, , urlPart = 'bilibili'] = process.argv
+const MODES = ['--fill', '--verify'] as const
+const mode = MODES.find((m) => process.argv.includes(m))
+
+if (!mode) {
+  console.log(`调试 Chrome 登录 B 站（人机交互流程）
+
+用法：
+  bun scripts/dev/login-debug-chrome.ts --fill      # 步骤 1：填账号密码，然后交给人
+  bun scripts/dev/login-debug-chrome.ts --verify    # 步骤 3：确认登录态
+
+完整流程：
+  1) --fill          从 .env 读凭据填表（全程 0 暴露），并聚焦验证码框
+  2) 人              在调试窗口过验证码（图片验证码 / geetest 点选）并点「登录」
+  3) --verify        确认拿到 DedeUserID cookie
+
+注：登录态存在调试 profile（D:\\chrome-debug-profile）里，不用每次冷启动重来。
+    看到「网络超时请点击此处重试」先怀疑验证码没过，那不是网络问题。`)
+  process.exit(0)
+}
 
 const USER = process.env.BILI_USER
 const PASS = process.env.BILI_PASS
@@ -30,9 +56,9 @@ interface Target {
   type: string
 }
 const targets = (await (await fetch('http://localhost:9222/json')).json()) as Target[]
-const tab = targets.find((t) => t.type === 'page' && t.url.includes(urlPart))
+const tab = targets.find((t) => t.type === 'page' && t.url.includes('bilibili'))
 if (!tab) {
-  console.error(`tab not found for: ${urlPart}`)
+  console.error('tab not found（调试 Chrome 需带 --remote-debugging-port=9222 启动）')
   process.exit(1)
 }
 
@@ -60,7 +86,7 @@ async function evalJs(expression: string) {
     awaitPromise: true,
   })
   if (r.exceptionDetails) {
-    // NOTE 这里绝不回显表达式本身：凭据可能在里面（本脚本已避免这种情况，双保险）
+    // NOTE 绝不回显表达式本身：凭据可能在里面（本脚本已避免，双保险）
     console.error('EX:', String(r.exceptionDetails.text ?? '').slice(0, 200))
   }
   return r.result?.value
@@ -85,7 +111,7 @@ const firstExisting = async (candidates: string[]) => {
   return null
 }
 
-// 聚焦并全选（insertText 会替换选区），表达式里只有选择器，没有任何凭据
+// 聚焦并全选（insertText 会替换选区）；表达式里只有选择器，没有任何凭据
 const focusAndSelect = (selector: string) =>
   evalJs(`(() => {
     const el = document.querySelector(${JSON.stringify(selector)})
@@ -97,6 +123,15 @@ const focusAndSelect = (selector: string) =>
 
 ws.onopen = async () => {
   await send('Page.enable')
+
+  // ── 步骤 3：确认登录态 ──────────────────────────────────────────────
+  if (mode === '--verify') {
+    const ok = (await evalJs(LOGGED_IN)) === true
+    console.log(ok ? 'LOGGED-IN' : 'NOT-LOGGED-IN')
+    process.exit(ok ? 0 : 1)
+  }
+
+  // ── 步骤 1：填表，然后交给人 ────────────────────────────────────────
   if ((await evalJs(LOGGED_IN)) === true) {
     console.log('ALREADY-LOGGED-IN')
     process.exit(0)
@@ -114,7 +149,7 @@ ws.onopen = async () => {
     process.exit(1)
   }
 
-  // 填充：值只作为 CDP 参数传给 Input.insertText，绝不进 JS 表达式
+  // 值只作为 CDP 参数传给 Input.insertText，绝不进 JS 表达式
   for (const [sel, value] of [
     [accSel, USER],
     [pwdSel, PASS],
@@ -138,51 +173,20 @@ ws.onopen = async () => {
     console.error('FILL-MISMATCH: 值没进输入框（检查选择器/焦点），未打印任何凭据内容')
     process.exit(1)
   }
-  console.log('填表: 账号密码已填入（长度校验通过）')
+  console.log('账号密码已填入（长度校验通过）')
 
-  if (capSel) {
-    await focusAndSelect(capSel)
-    console.log('')
-    console.log('👉 请在调试窗口里输入图片验证码（看不清就点「换一张」）。')
-    console.log('   账号密码我已经填好；你填够验证码后我会自动点「登录」，最多等 3 分钟。')
-    console.log('')
-  }
+  if (capSel) await focusAndSelect(capSel)
 
-  const deadline = Date.now() + 180_000
-  let submits = 0
-  let lastSubmit = 0
-  while (Date.now() < deadline) {
-    await sleep(1000)
-    if ((await evalJs(LOGGED_IN)) === true) {
-      console.log('LOGGED-IN')
-      process.exit(0)
-    }
-    const st = await evalJs(`(() => {
-      const cap = document.querySelector(${JSON.stringify(capSel ?? 'input[placeholder="输入图片中的内容"]')})
-      const btn = document.querySelector('.btn_primary')
-      return JSON.stringify({
-        capLen: cap ? cap.value.length : -1,
-        btnDisabled: btn ? (btn.className || '').toString().includes('disabled') : null,
-      })
-    })()`)
-    if (!st) continue
-    const { capLen, btnDisabled } = JSON.parse(st) as {
-      capLen: number
-      btnDisabled: boolean | null
-    }
-    if (capLen >= 4 && btnDisabled === false && submits < 6 && Date.now() - lastSubmit > 6000) {
-      await evalJs(
-        `(() => { const b = document.querySelector('.btn_primary'); if (b) b.click(); return 'clicked' })()`,
-      )
-      submits++
-      lastSubmit = Date.now()
-      console.log(`已点「登录」（第 ${submits} 次）`)
-    }
-  }
-  console.error('LOGIN-UNCONFIRMED: 超时未拿到 DedeUserID（验证码是否一直没填对？）')
-  process.exit(1)
+  console.log('')
+  console.log('👉 现在轮到你（验证码只能由人过）：')
+  console.log('   1. 若页面显示「网络超时请点击此处重试」，先点那个重试链接')
+  console.log('   2. 过验证码：图片验证码就输入图里的字符；geetest 点选就按提示点')
+  console.log('   3. 点「登录」')
+  console.log('')
+  console.log('   登录完成后跑：bun scripts/dev/login-debug-chrome.ts --verify')
+  process.exit(0)
 }
 setTimeout(() => {
   console.error('timeout')
   process.exit(1)
-}, 200_000)
+}, 60_000)

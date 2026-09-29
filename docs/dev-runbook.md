@@ -22,9 +22,29 @@
    (Get-Content 'D:\chrome-debug-profile\Default\Secure Preferences' -Raw) -match 'user_scripts_enabled'
    ```
 
-3. **登录 B 站**：暗色主题、个性化等状态**登录后才存在**，未登录时页面上根本没有夜间模式入口和主题样式。两种方式：
-   - 手动在调试窗口登录一次（**最简单**）：登录态存在 `D:\chrome-debug-profile` 里，不是每次冷启动都要重来。
-   - `bun scripts/dev/login-debug-chrome.ts`：**凭据由 `bun` 自动加载**仓库根 `.env`（`BILI_USER` / `BILI_PASS`），脚本自己不读文件；按 AGENTS.md「Secrets」全程 **0 暴露** —— 凭据只作为 CDP 参数经 `Input.insertText` 走真实输入管线送进页面，只用「长度是否一致」校验，从不读回、从不打印。**CRITICAL B 站密码登录有图片验证码（还可能叠加 geetest 风控），无法无人值守**——脚本填完账号密码会停下来等你手动输验证码，检测到填够位数后自动点「登录」，再轮询 `DedeUserID` cookie 确认。
+3. **登录 B 站（人机交互，不能全自动）**：暗色主题、个性化等状态**登录后才存在**，未登录时页面上根本没有夜间模式入口和主题样式。
+
+   **为什么不能自动**：B 站密码登录会出图片验证码，风控再高一点直接上 geetest 点选验证（实测点「登录」后网络里出现 `api.geetest.com/...&type=click`）。这类验证码只能由人过——这是人机交互的固有环节，**不要试图绕开**（试过改走扫码，方向就是错的）。
+
+   **WARNING 必踩的误导文案**：验证码没过时页面显示的是「网络超时请点击此处重试」。实测点「登录」后按钮确实收到了完整的可信事件序列（`pointerdown→mousedown→pointerup→mouseup→click`）、请求也确实发出去了，只是被风控拦下。**看到「网络超时」先怀疑验证码，别去查网络。**
+
+   固化的三步流程：
+
+   ```bash
+   # 1) 脚本填账号密码（0 暴露，见 AGENTS.md「Secrets」），并聚焦验证码框
+   bun scripts/dev/login-debug-chrome.ts --fill
+   # 2) 👤 人在调试窗口过验证码并点「登录」（图片验证码输入字符；geetest 点选按提示点）
+   # 3) 确认登录态（DedeUserID cookie）
+   bun scripts/dev/login-debug-chrome.ts --verify    # 打印 LOGGED-IN / NOT-LOGGED-IN
+   ```
+
+   - 凭据由 `bun` 自动加载仓库根 `.env`（`BILI_USER` / `BILI_PASS`），**脚本自己不读文件**；值只作为 CDP 参数经 `Input.insertText` 走真实输入管线送进页面，只用「长度是否一致」校验，从不读回、从不打印。
+   - **登录态存在调试 profile（`D:\chrome-debug-profile`）里**，不是每次冷启动都要重来；已登录时 `--fill` 直接报 `ALREADY-LOGGED-IN`。
+   - 不想用脚本完全可以：直接在调试窗口手动登录一次，效果一样。
+   - 窗口没在最前面时（`Page.bringToFront` 只管标签页、不管 OS 窗口），把标题对应的窗口抬起来：
+     ```powershell
+     (New-Object -ComObject WScript.Shell).AppActivate('账号登录 - Google Chrome')
+     ```
 
 ## 日常启动
 
