@@ -2,26 +2,37 @@
 // 自起临时静态服务（不落 .user.js 临时文件、也不用手工起服务），打开 .user.js URL，
 // TM 弹 ask.html 时自动点「安装/重新安装」；版本更高且 TM 自动更新时安装页会自行关闭，
 // 按「已自动更新」正常返回。
-// 用法：bun scripts/dev/install-dist.ts [cdp 端口，默认 9222]
-// 前置：先 bun run build（本脚本只装 dist 现有产物，不负责构建）
+//
+// 用法：
+//   bun scripts/dev/install-dist.ts             手动、严格：连不上 / 装不上就 exit 1
+//   bun scripts/dev/install-dist.ts --soft      软失败：任何问题只打 WARNING 并 exit 0
+//   bun scripts/dev/install-dist.ts [--soft] [端口，默认 9222]
+//
+// NOTE 已接进 package.json 的 `postbuild` —— **`bun run build` 会自动装**，不用再单独跑这步：
+//   调试 Chrome 没开（9222 连不上）时 postbuild 只打一行 SKIP 就跳过，绝不让 build 失败。
 //
 // WARNING 同版本重装会走 TM 的「重新安装」弹窗，TM 会提示并**重置该脚本的设置**。
 // NOTE 别照搬 missav 那条「gm.ts 有 localStorage 兜底所以设置不丢」——**本仓库不成立**：
 // src/utils/gm.ts 的 GM_setValue 调通管理器的 API 后就 return，只有 GM API 缺失时才写
 // localStorage 兜底，所以 GM 可用时设置只存在 TM 里，重装就是真丢。
 // 要保留设置就走「更新」路径（改 vite.config.js 版号重新 build），或重装后重新设置一遍。
-const CDP = `http://127.0.0.1:${process.argv[2] ?? '9222'}`
+const argv = process.argv.slice(2)
+const SOFT = argv.includes('--soft')
+const CDP = `http://127.0.0.1:${argv.find((a) => !a.startsWith('--')) ?? '9222'}`
 const DIST = 'dist/bilibili-mobile.js'
 // 路径必须以 .user.js 结尾，TM 才会接管该响应
 const INSTALL_PATH = '/bilibili-mobile.user.js'
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+// soft 模式：安装出问题不该把 `bun run build` 一起搞挂（发布构建时调试 Chrome 常常没开）
+const fail = (msg: string): never => {
+  if (SOFT) console.warn(`WARNING ${msg}（--soft：不影响构建结果）`)
+  else console.error(msg)
+  process.exit(SOFT ? 0 : 1)
+}
 
 const code = await Bun.file(DIST).text().catch(() => null)
-if (!code) {
-  console.error(`缺少 ${DIST}，先执行 bun run build`)
-  process.exit(1)
-}
+if (!code) fail(`缺少 ${DIST}，先执行 bun run build`)
 const version = code.match(/@version\s+(\S+)/)?.[1] ?? '?'
 
 const server = Bun.serve({
@@ -46,10 +57,7 @@ interface Target {
 
 const list = async (): Promise<Target[]> => {
   const res = await fetch(`${CDP}/json/list`).catch(() => null)
-  if (!res) {
-    console.error(`连不上 CDP ${CDP}（调试 Chrome 需带 --remote-debugging-port 启动）`)
-    process.exit(1)
-  }
+  if (!res) fail(`连不上 CDP ${CDP}（调试 Chrome 需带 --remote-debugging-port 启动）`)
   return res.json() as Promise<Target[]>
 }
 const closeTab = (id: string) => fetch(`${CDP}/json/close/${id}`).catch(() => {})
@@ -120,10 +128,9 @@ for (let i = 0; i < 80; i++) {
 }
 if (!ask) {
   await cleanup([created.id])
-  console.error(
+  fail(
     'TM 未接管：ask.html 未出现（TM 是否已安装/已启用？必要时确认「允许运行用户脚本」是开着的）',
   )
-  process.exit(1)
 }
 
 // 点安装按钮：target 出现早于页面渲染，需重试；安装/重新安装/更新按钮同 class，
@@ -144,9 +151,6 @@ for (let i = 0; i < 20 && !label; i++) {
 
 await sleep(1500) // 等 TM 落盘再关页面
 await cleanup([created.id])
-if (!label) {
-  console.error('未找到安装按钮（TM 安装页结构可能已变）')
-  process.exit(1)
-}
+if (!label) fail('未找到安装按钮（TM 安装页结构可能已变）')
 console.log(`v${version} 已安装（按钮：${label}）`)
 process.exit(0)
