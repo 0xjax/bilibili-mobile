@@ -26,7 +26,7 @@ import { handleActionbar } from './bar/actionbar.ts'
 import { preloadAnchor, handleHeaderImage, handleVideoCard } from './home.js'
 import { videoInteraction } from './video.js'
 import { createUnfoldBtn, coverContextMenu } from './message.ts'
-import { waitDOMContentLoaded } from './utils/wait.ts'
+import { waitDOMContentLoaded, waitHead } from './utils/wait.ts'
 import { initShadowHook } from './utils/shadow.ts'
 ;(function () {
   initShadowHook() // 必须先于页面脚本拦截 attachShadow
@@ -35,22 +35,26 @@ import { initShadowHook } from './utils/shadow.ts'
     return
   } // 检查当前执行环境是否为顶级窗口
 
-  /* initViewport */ document.head.appendChild(
-    Object.assign(document.createElement('meta'), {
-      name: 'viewport',
-      content: 'width=device-width, initial-scale=1',
-    }),
-  )
+  /* initViewport */ waitHead(() => {
+    document.head.appendChild(
+      Object.assign(document.createElement('meta'), {
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1',
+      }),
+    )
+  })
 
   preventBeforeUnload()
   countViewTime()
 
-  /* iconfont for dialog */ document.head.appendChild(
-    Object.assign(document.createElement('link'), {
-      rel: 'stylesheet',
-      href: 'https://s1.hdslb.com/bfs/static/jinkela/space/css/space.8.22c06a62b42dec796d083a84f5a769f44a97b325.css',
-    }),
-  )
+  /* iconfont for dialog */ waitHead(() => {
+    document.head.appendChild(
+      Object.assign(document.createElement('link'), {
+        rel: 'stylesheet',
+        href: 'https://s1.hdslb.com/bfs/static/jinkela/space/css/space.8.22c06a62b42dec796d083a84f5a769f44a97b325.css',
+      }),
+    )
+  })
 
   console.log('Bilibili mobile execute!')
 

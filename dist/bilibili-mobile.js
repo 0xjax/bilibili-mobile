@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 移动端
 // @namespace    https://github.com/jk278/bilibili-mobile
-// @version      5.4.12
+// @version      5.4.13
 // @author       jk278
 // @description  Safari打开电脑模式，其它浏览器关闭电脑模式修改网站UA，获取舒适的移动端体验。
 // @license      MIT
@@ -82,6 +82,22 @@
 		};
 		element.addEventListener("transitionend", handleTransitionEnd);
 	};
+	function showToast(message, duration = 3e3) {
+		const toasts = document.querySelectorAll("#toast");
+		for (const toast of toasts) {
+			toast.textContent = message;
+			toast.style.display = "block";
+			setTimeout(() => {
+				toast.setAttribute("show", "");
+			}, 10);
+			setTimeout(() => {
+				toast.removeAttribute("show");
+				handleTransitionEndOnce(toast, "opacity", () => {
+					toast.style.cssText = "";
+				});
+			}, duration);
+		}
+	}
 	function setupSlide(container, touchXThreshold, onSlideLeft, onSlideRight) {
 		let startX = 0;
 		let startY = 0;
@@ -128,19 +144,7 @@
 				if (storedTime % 120 === 0) {
 					const fullscreenElem = document.fullscreenElement;
 					if (fullscreenElem && !fullscreenElem.querySelector(":scope>#toast")) fullscreenElem.appendChild(document.querySelector("#toast").cloneNode());
-					document.querySelectorAll("#toast").forEach((toast) => {
-						toast.textContent = `您已连续浏览 ${storedTime / 60} 小时，请注意休息`;
-						toast.style.display = "block";
-						setTimeout(() => {
-							toast.setAttribute("show", "");
-						}, 10);
-						setTimeout(() => {
-							toast.removeAttribute("show");
-							handleTransitionEndOnce(toast, "opacity", () => {
-								toast.style.cssText = "";
-							});
-						}, 5e3);
-					});
+					showToast(`您已连续浏览 ${storedTime / 60} 小时，请注意休息`, 5e3);
 				}
 			}, 6e4);
 		});
@@ -297,6 +301,22 @@
 	var waitDOMContentLoaded = (callback) => {
 		if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", callback);
 		else callback();
+	};
+	var waitHead = (callback) => {
+		if (document.head) {
+			callback();
+			return;
+		}
+		const observer = new MutationObserver(() => {
+			if (document.head) {
+				observer.disconnect();
+				callback();
+			}
+		});
+		observer.observe(document, {
+			childList: true,
+			subtree: true
+		});
 	};
 	function appendStyle(id, textContent) {
 		const style = Object.assign(document.createElement("style"), {
@@ -1932,19 +1952,8 @@ div.bili-live-card__info {
 					location.href = link.href;
 					return;
 				}
-				const toast = document.querySelector("#toast");
-				toast.textContent = "网页菜单加载中，请稍后重试";
-				toast.style.display = "block";
-				setTimeout(() => {
-					toast.setAttribute("show", "");
-				}, 10);
+				showToast("网页菜单加载中，请稍后重试");
 				menuOverlay.click();
-				setTimeout(() => {
-					toast.removeAttribute("show");
-					toast.addEventListener("transitionend", () => {
-						toast.style.cssText = "";
-					}, { once: true });
-				}, 3e3);
 				return;
 			}
 			openedDialog = token;
@@ -3109,16 +3118,20 @@ div.bili-dyn-item-draw__avatar {
 	(function() {
 		initShadowHook();
 		if (window.top !== window.self) return;
-		document.head.appendChild(Object.assign(document.createElement("meta"), {
-			name: "viewport",
-			content: "width=device-width, initial-scale=1"
-		}));
+		waitHead(() => {
+			document.head.appendChild(Object.assign(document.createElement("meta"), {
+				name: "viewport",
+				content: "width=device-width, initial-scale=1"
+			}));
+		});
 		preventBeforeUnload();
 		countViewTime();
-		document.head.appendChild(Object.assign(document.createElement("link"), {
-			rel: "stylesheet",
-			href: "https://s1.hdslb.com/bfs/static/jinkela/space/css/space.8.22c06a62b42dec796d083a84f5a769f44a97b325.css"
-		}));
+		waitHead(() => {
+			document.head.appendChild(Object.assign(document.createElement("link"), {
+				rel: "stylesheet",
+				href: "https://s1.hdslb.com/bfs/static/jinkela/space/css/space.8.22c06a62b42dec796d083a84f5a769f44a97b325.css"
+			}));
+		});
 		console.log("Bilibili mobile execute!");
 		const firstSubdomain = location.hostname.substring(0, location.hostname.indexOf("."));
 		const pathToTypeMap = {

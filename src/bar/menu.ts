@@ -3,6 +3,7 @@ import { handleHistoryShowMore } from './menu-history.ts'
 import { handleDynamicShowMore } from './menu-dynamic.ts'
 import { getUnreadNums } from '../api.ts'
 import { handleTransitionEndOnce } from '../utils/transition.ts'
+import { showToast } from '../utils/toast.ts'
 
 export function setMenuBtn() {
   let isOldApp: boolean
@@ -162,25 +163,9 @@ export function setMenuBtn() {
           return
         }
 
-        const toast = document.querySelector('#toast') as HTMLElement
-        toast.textContent = '网页菜单加载中，请稍后重试'
-        toast.style.display = 'block'
-        setTimeout(() => {
-          toast.setAttribute('show', '')
-        }, 10)
+        showToast('网页菜单加载中，请稍后重试')
 
         menuOverlay.click()
-
-        setTimeout(() => {
-          toast.removeAttribute('show')
-          toast.addEventListener(
-            'transitionend',
-            () => {
-              toast.style.cssText = ''
-            },
-            { once: true },
-          )
-        }, 3000)
 
         return
       }

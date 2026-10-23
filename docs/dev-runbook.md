@@ -152,10 +152,18 @@ bun scripts/dev/audit-selectors.ts --viewports mobile --wait 12000
 - 新开 tab：`curl -X PUT "http://localhost:9222/json/new?<url>"`（必须 PUT）。
 - 读油猴存储：`localStorage.getItem('gm:<key>')`。**NOTE 本仓库 `gm.ts` 只在 GM API 缺失时才写这个兜底**，所以它经常是空的，别拿它当"设置没生效"的判据。
 - 页面 JS 死循环卡死时 `Runtime.evaluate` 也会超时，用 `cdp-reset.ts` 浏览器级重开。
+- **`Ctrl+Shift+T` 恢复的 tab 是关闭前的冻结页面**（bfcache/会话恢复，不重新加载）：脚本不重跑、DOM 停在关闭那一刻。所以「重开仍显示旧状态」**不代表异步操作没送达**——服务器可能早已成功，刷新一次再判。验证异步操作是否落库必须刷新页面或直接查接口，别拿恢复出来的页面当判据。
 - **绝不用 `taskkill //IM chrome.exe` 关调试 Chrome**：会误杀用户正在使用的日常浏览器；只允许经 CDP `Browser.close`（只作用于 9222 调试 profile）。
 - 页面挂 `beforeunload` 原生确认框时会阻塞该 tab 的 `Runtime.evaluate` 和截图——CDP 全线超时先想到这一层，不是页面死了。
 - **WARNING 后台标签页收不到真实输入**：`document.visibilityState === 'hidden'` 的 tab，Chrome 直接丢弃 `Input.dispatchMouseEvent`——埋点日志为空、状态不变，看着像"点了没反应"。`cdp-press.ts` 按压前会先 `Page.bringToFront`，手写 CDP 脚本同样要加。
 - **WARNING `Emulation.setDeviceMetricsOverride` 会跨刷新/跨导航持续生效**：清除必须先设 `0x0`（0 = 跟随窗口）再 clear，直接 clear 对已固定的 tab 常不生效。
+
+## DOM 注入踩坑（MutationObserver，移植自 missav-desktop 实测）
+
+- **run-at document-start 时 `document.head` / `documentElement` 可能还没出生**（跨站点实测 head/html/body 全 null），此时 appendChild 直接崩掉整个启动阶段。要等 head 就用 `utils/wait.ts` 的 `waitHead`。
+- **多套响应式容器要全部就绪才 disconnect observer**：小屏套先渲染，此时断开，大屏套会永久缺失。
+- **observer 必须监听 `attributes`**：框架（Alpine/Vue）常把元素先放进 DOM、后补属性，只看 `childList` 会错过最后一突变更。
+- 去重靠元素上的 `data-*` 标记，重复触发无害；observer 带超时兜底断开（如 15s），别无限挂着。
 
 ## 浏览器工具分工：纯 CDP vs agent-browser
 

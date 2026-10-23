@@ -1,6 +1,7 @@
 import { unsafeWindow } from '$'
 import { GM_getValue, GM_setValue } from './utils/gm.ts'
 import { handleTransitionEndOnce } from './utils/transition.ts'
+import { showToast } from './utils/toast.ts'
 import { setupSlide } from './utils/slide.ts'
 
 export function preventBeforeUnload() {
@@ -66,28 +67,9 @@ export function countViewTime() {
       if (storedTime % 120 === 0) {
         const fullscreenElem = document.fullscreenElement
         if (fullscreenElem && !fullscreenElem.querySelector(':scope>#toast')) {
-          fullscreenElem.appendChild(
-            document.querySelector('#toast')!.cloneNode(),
-          )
+          fullscreenElem.appendChild(document.querySelector('#toast')!.cloneNode())
         }
-        const toasts = document.querySelectorAll(
-          '#toast',
-        ) as NodeListOf<HTMLElement>
-
-        toasts.forEach((toast) => {
-          toast.textContent = `您已连续浏览 ${storedTime / 60} 小时，请注意休息`
-          toast.style.display = 'block'
-          setTimeout(() => {
-            toast.setAttribute('show', '')
-          }, 10)
-
-          setTimeout(() => {
-            toast.removeAttribute('show')
-            handleTransitionEndOnce(toast, 'opacity', () => {
-              toast.style.cssText = ''
-            })
-          }, 5000)
-        })
+        showToast(`您已连续浏览 ${storedTime / 60} 小时，请注意休息`, 5000)
       }
     }, 60000)
   })
